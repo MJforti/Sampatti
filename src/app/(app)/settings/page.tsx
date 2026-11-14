@@ -7,6 +7,7 @@ import { Button, Confirm, PageHeader, SectionTitle, Badge } from "@/components/u
 import { AdminToggle } from "@/components/shell";
 import { enablePush, disablePush, pushState, type PushState } from "@/components/pwa";
 import { supabase } from "@/lib/supabase/client";
+import { ThemePicker } from "@/components/theme";
 
 const MUTABLE = [["insurance", "Insurance"], ["investments", "Investments & SIPs"], ["loans", "Loans & EMIs"], ["vehicles", "Vehicles"], ["tax", "Tax & compliance"], ["documents", "Document expiry"], ["obligations", "Other payments"]];
 
@@ -55,6 +56,9 @@ export default function Settings() {
           <Button variant="secondary" onClick={async () => { await sb.auth.signOut(); router.replace("/login"); }}><LogOut className="size-4" />Sign out</Button>
         </div>
       </div>
+
+      <SectionTitle>Appearance</SectionTitle>
+      <ThemePicker />
 
       <SectionTitle>Families</SectionTitle>
       <JoinFamily />

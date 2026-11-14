@@ -7,8 +7,10 @@ export function RegisterSW() {
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
       navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((r) => r.update()).catch(() => {});
       // When a fixed service worker takes over, reload once so the page gets fresh styles.
+      // Only when an older worker is being replaced — never on a first visit (would wipe forms mid-typing).
+      const hadController = !!navigator.serviceWorker.controller;
       let reloaded = false;
-      navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloaded) { reloaded = true; location.reload(); } });
+      navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
     }
   }, []);
   return null;

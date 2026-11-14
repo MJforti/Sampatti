@@ -23,7 +23,7 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #111314; --surface: #1a1d1f; --surface-2: #222628; --ink: #eef0f1; --ink-2: #b4b9be; --ink-3: #7d838a;
     --line: #2c3134; --accent: #5fbf9b; --accent-ink: #0d1f19; --accent-soft: #1b3129;
     --ok: #5cc48b; --ok-soft: #173023; --warn: #e3a440; --warn-soft: #33270f; --danger: #f07a65; --danger-soft: #3a1c17;
@@ -33,6 +33,16 @@
     color-scheme: dark;
   }
 }
+:root[data-theme="dark"] {
+    --bg: #111314; --surface: #1a1d1f; --surface-2: #222628; --ink: #eef0f1; --ink-2: #b4b9be; --ink-3: #7d838a;
+    --line: #2c3134; --accent: #5fbf9b; --accent-ink: #0d1f19; --accent-soft: #1b3129;
+    --ok: #5cc48b; --ok-soft: #173023; --warn: #e3a440; --warn-soft: #33270f; --danger: #f07a65; --danger-soft: #3a1c17;
+    --info: #7ea6ec; --info-soft: #18243a; --admin: #5fbf9b; --admin-soft: #1b3129;
+    --c-insurance: #7ea6ec; --c-loan: #f07a65; --c-invest: #5cc48b; --c-vehicle: #e3a440; --c-tax: #b996e6; --c-other: #9aa1aa;
+    --shadow: 0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+:root[data-theme="light"] { color-scheme: light; }
 
 @theme inline {
   --color-bg: var(--bg);

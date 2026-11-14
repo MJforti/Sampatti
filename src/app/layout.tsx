@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppProviders } from "@/components/providers";
 import { RegisterSW } from "@/components/pwa";
+import { THEME_BOOT } from "@/components/theme";
 
 export const metadata: Metadata = {
   title: "Sampatti — Family finances",
@@ -17,7 +18,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN">
+    <html lang="en-IN" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} /></head>
       <body>
         <AppProviders>{children}</AppProviders>
         <RegisterSW />
