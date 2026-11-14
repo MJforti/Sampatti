@@ -158,8 +158,15 @@ function JoinFamily() {
           <Button variant="secondary" loading={busy} disabled={!code.trim()} onClick={() => (mine ? setConfirm(true) : join())}>{mine ? "Switch" : "Join"}</Button>
         </div></label>
       <p className="text-xs text-ink-3">You can be in one family at a time.</p>
-      <Confirm open={confirm} onClose={() => setConfirm(false)} title="Switch family?" confirmLabel="Switch" loading={busy}
-        message={`You’ll leave ${mine?.name} and stop seeing its members and reminders.`} onConfirm={join} />
+      <Confirm open={confirm} onClose={() => setConfirm(false)} title="Are you sure?" confirmLabel="Yes, switch family" danger loading={busy}
+        message={<div className="space-y-3">
+          <p>You’re about to leave <span className="text-ink font-medium">{mine?.name}</span>. You can only be in one family at a time.</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>You’ll stop seeing {mine?.name}’s members, records and documents</li>
+            <li>You’ll stop getting their payment reminders</li>
+            <li>To come back, you’ll need {mine?.name}’s access code again</li>
+          </ul>
+        </div>} onConfirm={join} />
     </div>
   );
 }
