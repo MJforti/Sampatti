@@ -16,3 +16,4 @@ create function storage.foldername(name text) returns text[] language sql immuta
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+create schema vault; create table vault.decrypted_secrets (name text, decrypted_secret text);

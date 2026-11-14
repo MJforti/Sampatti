@@ -201,3 +201,15 @@ select send_test_notification(), send_test_notification(), send_test_notificatio
 do $$ begin perform send_test_notification(); raise exception 'should fail'; exception when others then
   if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - test alerts rate-limited'; end $$;
 select pg_temp.act_as(null);
+
+-- Delete a profile with records
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select verify_admin_pin('4826');
+do $$ begin perform delete_entity((select id from family_entities where name = 'Neema Jain'), 'wrong'); raise exception 'should fail';
+exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - name confirmation required'; end $$;
+select delete_entity((select id from family_entities where name = 'Neema Jain'), 'neema jain');
+select pg_temp.ok((select count(*) = 0 from family_entities where name = 'Neema Jain') and (select count(*) = 0 from loans), 'profile and its records deleted');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+do $$ begin perform delete_entity((select id from family_entities limit 1), 'x'); raise exception 'should fail';
+exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - non-admin cannot delete profiles'; end $$;
+select pg_temp.act_as(null);
