@@ -10,7 +10,7 @@ export type Bank = { id: string; entity_id: string; bank_name: string; account_l
 export type Vehicle = { id: string; entity_id: string; registration_number: string };
 export type UserProfile = { id: string; email: string; full_name: string | null; role: "admin" | "family_member" | "accountant" | "read_only"; is_active: boolean; linked_entity_id?: string | null };
 export type AdminStatus = {
-  is_admin: boolean; pin_configured: boolean; can_bootstrap: boolean; unlocked: boolean;
+  is_admin: boolean; is_ultra?: boolean; family_id?: string | null; family_name?: string | null; pin_configured: boolean; can_bootstrap: boolean; unlocked: boolean;
   expires_at: string | null; session_minutes: number; locked_until: string | null; attempts_left: number;
 };
 type Settings = { timezone: string; reminder_offsets: number[]; overdue_repeat_days: number; admin_session_minutes: number; auto_debit_reminder_hours: number; max_pin_attempts: number; lockout_minutes: number; app_url: string | null; pin_set_at: string | null };
@@ -34,6 +34,9 @@ type Ctx = {
   // admin
   admin: AdminStatus | null;
   isAdminMode: boolean;
+  isUltra: boolean;
+  canEdit: (entityId: string | null | undefined) => boolean;
+  adminEntities: Entity[];
   refreshAdmin: () => Promise<AdminStatus | null>;
   setAdmin: (s: AdminStatus) => void;
   lockAdmin: () => Promise<void>;
@@ -167,7 +170,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
       return b ? `${b.nickname || b.bank_name}${b.account_last4 ? " ••" + b.account_last4 : ""}` : "—";
     },
     selected: entities.some((e) => e.id === selected) ? selected : null, setSelected,
-    admin, isAdminMode, refreshAdmin, setAdmin, lockAdmin, pinOpen, setPinOpen, toast, unread, refreshUnread,
+    admin, isAdminMode,
+    isUltra: isAdminMode && !!admin?.is_ultra,
+    canEdit: (id) => isAdminMode && (!!admin?.is_ultra || (!!id && entities.find((e) => e.id === id)?.family_id === admin?.family_id)),
+    adminEntities: !isAdminMode ? [] : admin?.is_ultra ? entities : entities.filter((e) => e.family_id === admin?.family_id),
+    refreshAdmin, setAdmin, lockAdmin, pinOpen, setPinOpen, toast, unread, refreshUnread,
   }), [user, profile, loading, entities, families, banks, vehicles, settings, reloadRefs, selected, setSelected, admin, isAdminMode, refreshAdmin, lockAdmin, pinOpen, toast, unread, refreshUnread]);
 
   return (

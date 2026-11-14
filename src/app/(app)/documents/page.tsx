@@ -10,7 +10,7 @@ import { unwrap, useQuery } from "@/lib/use-query";
 import { DOC_CATEGORIES, uploadDocument } from "@/lib/documents";
 
 export default function Documents() {
-  const { selected, isAdminMode, entities, toast } = useApp();
+  const { selected, isAdminMode, adminEntities: entities, toast } = useApp();
   const [cat, setCat] = useState("all");
   const [term, setTerm] = useState("");
   const [pending, setPending] = useState<File | null>(null);

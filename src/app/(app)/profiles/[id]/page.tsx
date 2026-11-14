@@ -17,7 +17,7 @@ import { OPEN_STATUSES } from "@/lib/status";
 
 export default function ProfileDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { entities, isAdminMode, tz, setSelected, selected, toast, reloadRefs, profile } = useApp();
+  const { entities, isAdminMode, tz, setSelected, selected, toast, reloadRefs, profile, canEdit } = useApp();
   const [picking, setPicking] = useState(false);
   const router = useRouter();
   const [removing, setRemoving] = useState(false);
@@ -45,9 +45,9 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
   return (
     <div>
       <PageHeader title={e.name} back="/profiles" subtitle={e.entity_type.toUpperCase() === "HUF" ? "HUF" : e.entity_type[0].toUpperCase() + e.entity_type.slice(1)}
-        action={isAdminMode ? <Button size="sm" variant="admin" onClick={() => setEditing(true)}><Pencil className="size-4" />Edit</Button> : undefined} />
+        action={canEdit(id) ? <Button size="sm" variant="admin" onClick={() => setEditing(true)}><Pencil className="size-4" />Edit</Button> : undefined} />
       {(() => {
-        const can = canChooseEmoji(e.id, isAdminMode, profile?.linked_entity_id);
+        const can = canEdit(e.id) || profile?.linked_entity_id === e.id;
         return (
           <div className="flex items-center gap-4 mb-4">
             <MemberAvatar entity={e} size="lg" onClick={can ? () => setPicking(true) : undefined} />
@@ -82,7 +82,7 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
             {e.email && <Row label="Email" value={e.email} />}{e.phone && <Row label="Phone" value={e.phone} />}{e.pan_masked && <Row label="PAN" value={e.pan_masked} />}{e.notes && <Row label="Notes" value={e.notes} />}</div></>}
         </>
       )}
-      {isAdminMode && (
+      {canEdit(id) && (
         <Button variant="ghost" className="w-full mt-6 text-danger" onClick={() => { setConfirmName(""); setRemoving(true); }}>
           <Trash2 className="size-4" />Remove profile
         </Button>
@@ -112,7 +112,7 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
             <input className="field mt-1.5" value={confirmName} onChange={(ev) => setConfirmName(ev.target.value)} autoComplete="off" /></label>
         </div>
       </Sheet>
-      {isAdminMode && <ProfileForm open={editing} onClose={() => { setEditing(false); q.reload(); }} entity={e} />}
+      {canEdit(id) && <ProfileForm open={editing} onClose={() => { setEditing(false); q.reload(); }} entity={e} />}
     </div>
   );
 }

@@ -18,7 +18,7 @@ function getVal(r: Rec, key: string) {
 export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
   mod: ModuleDef; record?: Rec | null; open: boolean; onClose: () => void; onSaved: (r: Rec) => void; defaults?: Rec;
 }) {
-  const { entities, banks, vehicles, toast, isAdminMode, setPinOpen } = useApp();
+  const { adminEntities: entities, banks, vehicles, toast, isAdminMode, setPinOpen } = useApp();
   const initial = useMemo(() => {
     const base: Rec = { ...(defaults ?? {}), ...(record ?? {}) };
     const v: Rec = {};

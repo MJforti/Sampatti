@@ -13,7 +13,7 @@ import { MemberAvatar, EmojiPicker } from "@/components/member-emoji";
 const MUTABLE = [["insurance", "Insurance"], ["investments", "Investments & SIPs"], ["loans", "Loans & EMIs"], ["vehicles", "Vehicles"], ["tax", "Tax & compliance"], ["documents", "Document expiry"], ["obligations", "Other payments"]];
 
 export default function Settings() {
-  const { user, profile, toast, isAdminMode, settings, reloadRefs, refreshUnread } = useApp();
+  const { user, profile, toast, isAdminMode, isUltra, admin, settings, reloadRefs, refreshUnread } = useApp();
   const router = useRouter();
   const sb = supabase();
   const [prefs, setPrefs] = useState<{ in_app: boolean; email: boolean; push: boolean; muted_categories: string[] } | null>(null);
@@ -104,12 +104,12 @@ export default function Settings() {
         </>
       )}
 
-      {profile?.role === "admin" && (
+      {admin?.is_admin && (
         <>
           <SectionTitle>Administrator</SectionTitle>
           {!isAdminMode ? <AdminToggle /> : (
             <div className="space-y-2">
-              <div className="card px-4 py-4 space-y-3">
+              {isUltra && <div className="card px-4 py-4 space-y-3">
                 <div className="font-medium">Reminder schedule</div>
                 <label className="block"><span className="text-sm text-ink-2">Days before due date</span><input className="field mt-1.5 num" value={app.offsets} onChange={(e) => setApp({ ...app, offsets: e.target.value })} /></label>
                 <label className="block"><span className="text-sm text-ink-2">Repeat overdue reminders every (days)</span><input inputMode="numeric" className="field mt-1.5" value={app.overdue} onChange={(e) => setApp({ ...app, overdue: e.target.value })} /></label>
@@ -121,16 +121,16 @@ export default function Settings() {
                   if (offs.some((n) => !Number.isInteger(n))) return toast("Days must be whole numbers", "error");
                   run(() => sb.rpc("update_app_settings", { p: { reminder_offsets: offs, overdue_repeat_days: Number(app.overdue), timezone: app.timezone, admin_session_minutes: Number(app.minutes), app_url: app.app_url || null } }).then((r) => { reloadRefs(); return r; }), "Settings saved");
                 }}>Save settings</Button>
-              </div>
+              </div>}
               <div className="card px-4 py-4 space-y-3">
-                <div className="font-medium">Change administrator PIN</div>
+                <div className="font-medium">Change your admin PIN</div>
                 <div className="grid grid-cols-2 gap-2">
                   <input className="field num" inputMode="numeric" type="password" maxLength={4} placeholder="Current" value={pin.cur} onChange={(e) => setPin({ ...pin, cur: e.target.value.replace(/\D/g, "") })} />
                   <input className="field num" inputMode="numeric" type="password" maxLength={4} placeholder="New" value={pin.next} onChange={(e) => setPin({ ...pin, next: e.target.value.replace(/\D/g, "") })} />
                 </div>
                 <Button variant="admin" className="w-full" onClick={() => run(() => sb.rpc("change_admin_pin", { p_current: pin.cur, p_new: pin.next }).then((r) => { setPin({ cur: "", next: "" }); return r; }), "PIN changed")}>Change PIN</Button>
               </div>
-              <Button variant="secondary" className="w-full" onClick={() => run(() => sb.rpc("revoke_admin_sessions", { p_user: null }), "All Admin Mode sessions revoked")}>Revoke all Admin Mode sessions</Button>
+              {isUltra && <Button variant="secondary" className="w-full" onClick={() => run(() => sb.rpc("revoke_admin_sessions", { p_user: null }), "All Admin Mode sessions revoked")}>Revoke all Admin Mode sessions</Button>}
             </div>
           )}
         </>

@@ -5,8 +5,9 @@ import { useApp, friendlyError, type Entity } from "./providers";
 import { Button, Sheet } from "./ui";
 
 export function ProfileForm({ open, onClose, entity, defaultFamilyId }: { open: boolean; onClose: () => void; entity?: Entity; defaultFamilyId?: string | null }) {
-  const { toast, reloadRefs, families } = useApp();
-  const blank = { name: "", family_id: defaultFamilyId ?? "", entity_type: "individual", email: "", phone: "", pan_masked: "", notes: "", is_active: true };
+  const { toast, reloadRefs, families: allFamilies, isUltra, admin } = useApp();
+  const families = isUltra ? allFamilies : allFamilies.filter((f) => f.id === admin?.family_id);
+  const blank = { name: "", family_id: defaultFamilyId ?? (isUltra ? "" : admin?.family_id ?? ""), entity_type: "individual", email: "", phone: "", pan_masked: "", notes: "", is_active: true };
   const [v, setV] = useState<Record<string, any>>(blank);
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (open) setV(entity ? { ...blank, ...Object.fromEntries(Object.entries(entity).map(([k, x]) => [k, x ?? ""])) } : blank); }, [open, entity, defaultFamilyId]); // eslint-disable-line
@@ -34,7 +35,7 @@ export function ProfileForm({ open, onClose, entity, defaultFamilyId }: { open: 
         {f("name", "Name *")}
         <label className="block"><span className="text-sm font-medium text-ink-2">Family</span>
           <select className="field mt-1.5" value={v.family_id ?? ""} onChange={(e) => setV({ ...v, family_id: e.target.value })}>
-            <option value="">Not in a family</option>{families.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+            {isUltra && <option value="">Not in a family</option>}{families.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
           </select></label>
         <label className="block"><span className="text-sm font-medium text-ink-2">Type</span>
           <select className="field mt-1.5" value={v.entity_type} onChange={(e) => setV({ ...v, entity_type: e.target.value })}>

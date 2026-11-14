@@ -14,7 +14,7 @@ import { OPEN_STATUSES } from "@/lib/status";
 type Notif = { id: string; title: string; body: string; data: { url?: string }; read_at: string | null; created_at: string };
 
 export default function Reminders() {
-  const { user, tz, selected, refreshUnread, toast, isAdminMode } = useApp();
+  const { user, tz, selected, refreshUnread, toast, isUltra } = useApp();
   const [tab, setTab] = useState<"inbox" | "open">("inbox");
   const today = todayISO(tz);
 
@@ -87,7 +87,7 @@ export default function Reminders() {
           )}
         </>
       )}
-      {isAdminMode && <Button variant="admin" className="w-full mt-6" onClick={runNow}>Run reminder check now</Button>}
+      {isUltra && <Button variant="admin" className="w-full mt-6" onClick={runNow}>Run reminder check now</Button>}
     </div>
   );
 }

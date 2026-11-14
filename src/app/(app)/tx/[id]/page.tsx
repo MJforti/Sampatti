@@ -19,7 +19,7 @@ type Payment = { id: string; paid_on: string; amount_paise: number; reference: s
 
 export default function TxPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { tz, isAdminMode, setPinOpen, toast } = useApp();
+  const { tz, canEdit, setPinOpen, toast } = useApp();
   const today = todayISO(tz);
   const q = useQuery(async () => {
     const sb = supabase();
@@ -43,6 +43,7 @@ export default function TxPage({ params }: { params: Promise<{ id: string }> }) 
   if (q.loading && !q.data) return <ListSkeleton rows={5} />;
   if (!q.data) return <div><PageHeader title="Not found" back="/reminders" /><p className="text-ink-3">This item doesn’t exist or you don’t have access.</p></div>;
   const { ev, payments, history, reminders } = q.data;
+  const isAdminMode = canEdit(ev.entity_id);
   const open = !["paid", "cancelled", "renewed"].includes(ev.status);
   const days = daysBetween(today, ev.event_date);
   const isExpiry = ["vehicle_puc", "vehicle_insurance", "vehicle_fitness", "vehicle_registration", "vehicle_permit", "insurance_renewal", "document_expiry", "vehicle_road_tax", "vehicle_service"].includes(ev.category);

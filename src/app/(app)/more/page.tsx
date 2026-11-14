@@ -22,7 +22,7 @@ const ITEMS = [
 ] as const;
 
 export default function More() {
-  const { isAdminMode, admin } = useApp();
+  const { isUltra, admin } = useApp();
   return (
     <div>
       <PageHeader title="More" />
@@ -38,7 +38,7 @@ export default function More() {
       {admin?.is_admin && (
         <>
           <SectionTitle>Administration</SectionTitle>
-          {isAdminMode && (
+          {isUltra && (
             <div className="card overflow-hidden mb-2">
               <Link href="/admin/users" className="flex items-center gap-3 px-4 py-3.5 border-b hairline"><UserCog className="size-5 text-admin" /><span className="flex-1">Users & permissions</span><ChevronRight className="size-4 text-ink-3" /></Link>
               <Link href="/admin/audit" className="flex items-center gap-3 px-4 py-3.5"><ScrollText className="size-5 text-admin" /><span className="flex-1">Activity log</span><ChevronRight className="size-4 text-ink-3" /></Link>

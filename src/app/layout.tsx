@@ -19,8 +19,8 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-IN" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} /></head>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <AppProviders>{children}</AppProviders>
         <RegisterSW />
       </body>

@@ -7,15 +7,16 @@ import { unwrap, useQuery } from "@/lib/use-query";
 
 type U = { id: string; email: string; full_name: string | null; role: string; is_active: boolean; linked_entity_id?: string | null };
 type P = { id: string; user_id: string; entity_id: string; categories: string[] | null; can_view_documents: boolean; receive_notifications: boolean };
-const ROLES = [["admin", "Administrator"], ["family_member", "Family member"], ["accountant", "Accountant"], ["read_only", "Read-only"]];
+const ROLES = [["admin", "Ultra admin"], ["family_member", "Family member"], ["accountant", "Accountant"], ["read_only", "Read-only"]];
 const MODS = [["investments", "Investments"], ["insurance", "Insurance"], ["loans", "Loans"], ["vehicles", "Vehicles"], ["banks", "Banks"], ["tax", "Tax"], ["obligations", "Payments"], ["documents", "Documents"]];
 
 export default function Users() {
-  const { isAdminMode, entities, toast, user: me } = useApp();
+  const { isUltra: isAdminMode, entities, families, toast, user: me, reloadRefs } = useApp();
   const sb = supabase();
   const q = useQuery(async () => ({
     users: unwrap(await sb.from("user_profiles").select("*").order("created_at")) as U[],
     perms: unwrap(await sb.from("entity_permissions").select("*")) as P[],
+    members: unwrap(await sb.from("family_memberships").select("user_id, family_id, is_admin")) as { user_id: string; family_id: string; is_admin: boolean }[],
   }), []);
   const [edit, setEdit] = useState<U | null>(null);
   const [newPw, setNewPw] = useState("");
@@ -52,15 +53,32 @@ export default function Users() {
         <div className="card overflow-hidden">{q.data.users.map((u) => (
           <button key={u.id} onClick={() => setEdit(u)} className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b hairline last:border-0 active:bg-surface-2">
             <div className="flex-1 min-w-0"><div className="font-medium truncate">{u.full_name || u.email}</div><div className="text-[13px] text-ink-3 truncate">{u.email}</div></div>
-            <Badge tone={u.role === "admin" ? "admin" : "neutral"}>{ROLES.find(([k]) => k === u.role)?.[1]}</Badge>
+            <Badge tone={u.role === "admin" ? "admin" : "neutral"}>{q.data!.members.find((x) => x.user_id === u.id && x.is_admin) && u.role !== "admin" ? "Family admin" : ROLES.find(([k]) => k === u.role)?.[1]}</Badge>
             {!u.is_active && <Badge tone="muted">Disabled</Badge>}
           </button>))}</div>
       )}
-      <p className="mt-3 px-1 text-xs text-ink-3">Administrators see everything. Other users see only the profiles and sections granted below — enforced by the database, not just the screen.</p>
+      <p className="mt-3 px-1 text-xs text-ink-3">The ultra admin sees everything. Family admins manage their own family only. Other users see only the profiles and sections granted below — enforced by the database, not just the screen.</p>
 
       <Sheet open={!!edit} onClose={() => setEdit(null)} title={edit?.full_name || edit?.email || ""}>
         {edit && (
           <div className="space-y-4">
+            {edit.role !== "admin" && (() => {
+              const m = q.data?.members.find((x) => x.user_id === edit.id);
+              return (
+                <label className="block"><span className="text-sm font-medium text-ink-2">Family admin of</span>
+                  <select className="field mt-1.5" value={m?.is_admin ? m.family_id : ""} onChange={async (ev) => {
+                    const fid = ev.target.value;
+                    const r = fid ? await sb.rpc("set_family_admin", { p_user: edit.id, p_family: fid, p_admin: true })
+                      : m ? await sb.rpc("set_family_admin", { p_user: edit.id, p_family: m.family_id, p_admin: false }) : { error: null };
+                    if (r.error) return toast(friendlyError(r.error), "error");
+                    toast(fid ? "Family admin set. They’ll choose their own PIN" : "Family admin removed"); q.reload(); reloadRefs();
+                  }}>
+                    <option value="">Not a family admin{m ? ` (member of ${families.find((f) => f.id === m.family_id)?.name ?? "a family"})` : ""}</option>
+                    {families.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  </select>
+                  <span className="block mt-1 text-xs text-ink-3">Can add and edit records for that family only. Choosing a family moves them into it</span></label>
+              );
+            })()}
             <label className="block"><span className="text-sm font-medium text-ink-2">This person is</span>
               <select className="field mt-1.5" value={(edit as U & { linked_entity_id?: string | null }).linked_entity_id ?? ""} onChange={async (ev) => {
                 const { error } = await sb.rpc("link_user_profile", { p_user: edit.id, p_entity: ev.target.value || null });

@@ -21,7 +21,7 @@ export default function Detail({ params }: { params: Promise<{ module: string; i
   const mod = MODULES[module];
   if (!mod) notFound();
   const router = useRouter();
-  const { isAdminMode, entityName, bankLabel, vehicles, toast, reloadRefs, tz } = useApp();
+  const { canEdit, entityName, bankLabel, vehicles, toast, reloadRefs, tz } = useApp();
   const [editing, setEditing] = useState(false);
   const [confirm, setConfirm] = useState<null | "archive" | "delete" | "restore">(null);
   const [busy, setBusy] = useState(false);
@@ -48,6 +48,7 @@ export default function Detail({ params }: { params: Promise<{ module: string; i
     return { rec, ev, extra };
   }, [mod.table, id]);
 
+  const isAdminMode = canEdit(q.data?.rec?.entity_id);
   if (q.error) return <ErrorState error={q.error} retry={q.reload} />;
   if (q.loading && !q.data) return <ListSkeleton rows={6} />;
   if (!q.data) return <div><PageHeader title="Not found" back={`/m/${module}`} /><p className="text-ink-3">This record doesn’t exist or you don’t have access.</p></div>;

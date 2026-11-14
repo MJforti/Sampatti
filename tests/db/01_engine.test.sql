@@ -262,3 +262,33 @@ do $$ begin perform set_member_emoji((select id from family_entities where name 
 exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - cannot set someone else''s emoji'; end $$;
 select pg_temp.act_as(null);
 select pg_temp.ok((select emoji = '🌸' from family_entities where name = 'Rajesh Bimal and Associates'), 'member set own emoji');
+
+-- Family admins vs ultra admin
+select pg_temp.act_as(null);
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000d', 'famadmin@example.com');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select verify_admin_pin('4826');
+select set_family_admin('00000000-0000-0000-0000-00000000000d', (select id from families where name = 'Jain Family'), true);
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.ok((admin_status()->>'can_bootstrap')::boolean and not (admin_status()->>'is_ultra')::boolean, 'family admin is asked to set own PIN');
+select bootstrap_admin('7351');
+select pg_temp.ok((verify_admin_pin('7351')->>'ok')::boolean, 'family admin unlocks with own PIN');
+select pg_temp.ok(not exists (select 1 from family_entities where name = 'Rajesh Bimal and Associates'), 'family admin cannot see other family');
+insert into bank_accounts (entity_id, bank_name) select id, 'SBI' from family_entities where name = 'Vishesh Jain';
+select pg_temp.ok((select count(*) = 1 from bank_accounts where bank_name = 'SBI'), 'family admin edits own family');
+select pg_temp.act_as(null);
+select set_config('t.other', (select id::text from family_entities where name = 'Rajesh Bimal and Associates'), false);
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+do $$ begin insert into bank_accounts (entity_id, bank_name) values (current_setting('t.other')::uuid, 'Axis'); raise exception 'should fail';
+exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - family admin cannot write to another family'; end $$;
+do $$ begin perform update_app_settings('{"overdue_repeat_days": 2}'); raise exception 'should fail';
+exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - family admin cannot change app settings'; end $$;
+do $$ begin insert into family_entities (name, family_id) values ('Sneaky', current_setting('t.other')::uuid); raise exception 'should fail';
+exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - family admin cannot add members to other families'; end $$;
+insert into family_entities (name, family_id) values ('New Baby Jain', public.my_admin_family());
+select pg_temp.ok(exists (select 1 from family_entities where name = 'New Baby Jain'), 'family admin adds member to own family');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.ok((select count(*) >= 2 from families), 'ultra admin sees every family');
+insert into bank_accounts (entity_id, bank_name) values (current_setting('t.other')::uuid, 'Axis');
+select pg_temp.ok(true, 'ultra admin writes anywhere');
+select pg_temp.act_as(null);

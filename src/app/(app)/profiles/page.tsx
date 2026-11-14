@@ -15,7 +15,8 @@ import { OPEN_STATUSES, isInflow } from "@/lib/status";
 const TYPE_LABEL: Record<string, string> = { individual: "Individual", huf: "HUF", firm: "Firm", company: "Company", trust: "Trust", other: "Entity" };
 
 export default function Profiles() {
-  const { entities, families, isAdminMode, tz, loading, toast, reloadRefs } = useApp();
+  const { entities, families, isAdminMode, isUltra, admin, tz, loading, toast, reloadRefs } = useApp();
+  const manages = (fid: string | undefined) => isAdminMode && (isUltra || (!!fid && fid === admin?.family_id));
   const [adding, setAdding] = useState<{ familyId: string | null } | null>(null);
   const [famSheet, setFamSheet] = useState<Family | "new" | null>(null);
   const [famName, setFamName] = useState("");
@@ -50,7 +51,7 @@ export default function Profiles() {
   return (
     <div>
       <PageHeader title="Profiles" subtitle="Families and their members"
-        action={isAdminMode ? <Button size="sm" variant="admin" onClick={() => { setFamName(""); setFamSheet("new"); }}><Plus className="size-4" />Family</Button> : undefined} />
+        action={isUltra ? <Button size="sm" variant="admin" onClick={() => { setFamName(""); setFamSheet("new"); }}><Plus className="size-4" />Family</Button> : undefined} />
       {due.error && <ErrorState error={due.error} retry={due.reload} />}
       {loading ? <ListSkeleton rows={6} /> : groups.map(({ family, members }) => (
         <section key={family?.id ?? "none"} className="mb-6">
@@ -59,12 +60,12 @@ export default function Profiles() {
               <h2 className="text-[17px] font-medium truncate">{family ? family.name : "Not in a family"}</h2>
               <div className="text-[13px] text-ink-3">{members.length} member{members.length === 1 ? "" : "s"}</div>
             </div>
-            {isAdminMode && family && (
+            {manages(family?.id) && family && (
               <button onClick={() => { setFamName(family.name); setFamSheet(family); }} className="size-11 grid place-items-center rounded-full active:bg-surface-2" aria-label={`Rename ${family.name}`}><Pencil className="size-4 text-ink-2" /></button>
             )}
           </div>
 
-          {isAdminMode && family?.access_code && (
+          {manages(family?.id) && family?.access_code && (
             <div className="card px-4 py-3 mb-2 flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <div className="text-[13px] text-ink-3">Access code</div>
@@ -96,7 +97,7 @@ export default function Profiles() {
               );
             })}
             {members.length === 0 && <div className="px-4 py-4 text-sm text-ink-3">No members yet</div>}
-            {isAdminMode && family && (
+            {manages(family?.id) && family && (
               <button onClick={() => setAdding({ familyId: family.id })} className="w-full flex items-center gap-2 px-4 h-12 text-[15px] text-accent font-medium border-t hairline active:bg-surface-2">
                 <Plus className="size-4" />Add member
               </button>
