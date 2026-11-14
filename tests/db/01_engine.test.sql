@@ -233,3 +233,14 @@ insert into families (name) values ('Other Family');
 update family_entities set family_id = (select id from families where name = 'Other Family') where name = 'Rajesh Bimal and Associates';
 select pg_temp.ok(not exists (select 1 from entity_permissions ep join family_entities e on e.id = ep.entity_id
   where ep.user_id = '00000000-0000-0000-0000-00000000000c' and e.name = 'Rajesh Bimal and Associates'), 'moving a member out of the family withdraws access');
+
+-- One family per user: joining another family moves them
+select pg_temp.act_as(null);
+select set_config('t.code2', (select access_code from families where name = 'Other Family'), false);
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select join_family(current_setting('t.code2'));
+select pg_temp.act_as(null);
+select pg_temp.ok((select count(*) = 1 from family_memberships where user_id = '00000000-0000-0000-0000-00000000000c'), 'user is in exactly one family');
+select pg_temp.ok((select count(*) = 1 from entity_permissions where user_id = '00000000-0000-0000-0000-00000000000c'), 'access moved to the new family only');
+do $$ begin insert into family_memberships (user_id, family_id) select '00000000-0000-0000-0000-00000000000c', id from families where name = 'Jain Family'; raise exception 'should fail';
+exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - database blocks a second family'; end $$;

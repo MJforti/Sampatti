@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { useApp, friendlyError } from "@/components/providers";
-import { Button, PageHeader, SectionTitle, Badge } from "@/components/ui";
+import { Button, Confirm, PageHeader, SectionTitle, Badge } from "@/components/ui";
 import { AdminToggle } from "@/components/shell";
 import { enablePush, disablePush, pushState, type PushState } from "@/components/pwa";
 import { supabase } from "@/lib/supabase/client";
@@ -134,23 +134,32 @@ export default function Settings() {
 }
 
 function JoinFamily() {
-  const { families, toast, reloadRefs } = useApp();
+  const { families, toast, reloadRefs, profile } = useApp();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const isAdmin = profile?.role === "admin";
+  const mine = isAdmin ? null : families[0] ?? null; // non-admins can only see their own family
+  const join = async () => {
+    setBusy(true);
+    const { data, error } = await supabase().rpc("join_family", { p_code: code });
+    setBusy(false); setConfirm(false);
+    if (error) return toast(friendlyError(error), "error");
+    setCode(""); await reloadRefs();
+    toast(data.already ? `You’re already in ${data.family}` : data.left ? `Moved from ${data.left} to ${data.family}` : `You joined ${data.family}`);
+  };
+  if (isAdmin) return <div className="card px-4 py-3 text-sm text-ink-2">As administrator you can see every family. Manage them on the Profiles page.</div>;
   return (
     <div className="card px-4 py-4 space-y-3">
-      {families.length > 0 && <div className="text-sm text-ink-2">You’re in: <span className="text-ink font-medium">{families.map((f) => f.name).join(", ")}</span></div>}
-      <label className="block"><span className="text-sm font-medium text-ink-2">Join a family with its access code</span>
+      <div className="text-sm text-ink-2">{mine ? <>Your family: <span className="text-ink font-medium">{mine.name}</span></> : "You’re not in a family yet"}</div>
+      <label className="block"><span className="text-sm font-medium text-ink-2">{mine ? "Switch to another family" : "Join a family with its access code"}</span>
         <div className="flex gap-2 mt-1.5">
           <input className="field mono uppercase tracking-[0.12em]" placeholder="ABCD-2345" autoCapitalize="characters" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} />
-          <Button variant="secondary" loading={busy} onClick={async () => {
-            setBusy(true);
-            const { data, error } = await supabase().rpc("join_family", { p_code: code });
-            setBusy(false);
-            if (error) return toast(friendlyError(error), "error");
-            setCode(""); await reloadRefs(); toast(`You joined ${data.family}`);
-          }}>Join</Button>
+          <Button variant="secondary" loading={busy} disabled={!code.trim()} onClick={() => (mine ? setConfirm(true) : join())}>{mine ? "Switch" : "Join"}</Button>
         </div></label>
+      <p className="text-xs text-ink-3">You can be in one family at a time.</p>
+      <Confirm open={confirm} onClose={() => setConfirm(false)} title="Switch family?" confirmLabel="Switch" loading={busy}
+        message={`You’ll leave ${mine?.name} and stop seeing its members and reminders.`} onConfirm={join} />
     </div>
   );
 }

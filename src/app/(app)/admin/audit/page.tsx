@@ -21,7 +21,7 @@ const SPECIAL: Record<string, string> = {
   "admin.bootstrap": "set up the administrator PIN", "admin.unlocked": "unlocked Admin Mode", "admin.locked": "locked Admin Mode",
   "admin.pin_failed": "entered a wrong admin PIN", "admin.pin_denied_not_admin": "tried to open Admin Mode without admin rights",
   "admin.pin_changed": "changed the admin PIN", "admin.sessions_revoked": "signed out all Admin Mode sessions",
-  "settings.updated": "changed app settings", "user.password_reset": "reset a user’s password", "entity.deleted": "removed a profile",
+  "settings.updated": "changed app settings", "user.password_reset": "reset a user’s password", "entity.deleted": "removed a profile", "family.joined": "joined a family",
 };
 const STATUS: Record<string, string> = { paid: "paid", renewed: "renewed", cancelled: "cancelled", overdue: "overdue", awaiting_confirmation: "awaiting bank confirmation", auto_debit_scheduled: "auto-debit scheduled", upcoming: "upcoming", due_today: "due today" };
 const HIDDEN = new Set(["id", "updated_at", "created_at", "details", "anchor_day", "resolved_at", "entity_id"]);
@@ -51,7 +51,7 @@ function show(key: string, v: unknown) {
 
 function describe(l: Log, entityName: (id: string) => string): { text: string; details: string[]; tone: string } {
   if (SPECIAL[l.action]) {
-    const extra = l.action === "entity.deleted" ? ` “${l.old_data?.name}”` : "";
+    const extra = l.action === "entity.deleted" ? ` “${l.old_data?.name}”` : l.action === "family.joined" ? ` “${l.new_data?.name}”${l.new_data?.left ? ` (left “${l.new_data.left}”)` : ""}` : "";
     return { text: SPECIAL[l.action] + extra, details: [], tone: l.action.includes("fail") || l.action.includes("denied") ? "danger" : "neutral" };
   }
   const rec = l.new_data ?? l.old_data;
