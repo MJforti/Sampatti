@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* Design tokens — warm paper neutrals, ink type, a single deep-emerald accent.
+   Status colours are reserved for status only. */
+:root {
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --surface-2: #f0ede6;
+  --ink: #17191c;
+  --ink-2: #4a4f57;
+  --ink-3: #868b93;
+  --line: #e4e0d7;
+  --accent: #1d5c4a;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3efe9;
+  --ok: #1f7a4d;     --ok-soft: #e2f3ea;
+  --warn: #a15c00;   --warn-soft: #fbefd9;
+  --danger: #b3321f; --danger-soft: #fbe5e1;
+  --info: #2b5aa8;   --info-soft: #e5ecf8;
+  --admin: #6b3fa0;  --admin-soft: #efe7f8;
+  --c-insurance: #2b5aa8; --c-loan: #b3321f; --c-invest: #1f7a4d; --c-vehicle: #a15c00; --c-tax: #6b3fa0; --c-other: #5b6270;
+  --shadow: 0 1px 2px rgba(23, 25, 28, .04), 0 4px 16px rgba(23, 25, 28, .05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111314; --surface: #1a1d1f; --surface-2: #222628; --ink: #eef0f1; --ink-2: #b4b9be; --ink-3: #7d838a;
+    --line: #2c3134; --accent: #5fbf9b; --accent-ink: #0d1f19; --accent-soft: #1b3129;
+    --ok: #5cc48b; --ok-soft: #173023; --warn: #e3a440; --warn-soft: #33270f; --danger: #f07a65; --danger-soft: #3a1c17;
+    --info: #7ea6ec; --info-soft: #18243a; --admin: #b996e6; --admin-soft: #2a2036;
+    --c-insurance: #7ea6ec; --c-loan: #f07a65; --c-invest: #5cc48b; --c-vehicle: #e3a440; --c-tax: #b996e6; --c-other: #9aa1aa;
+    --shadow: 0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok); --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn); --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger); --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info); --color-info-soft: var(--info-soft);
+  --color-admin: var(--admin); --color-admin-soft: var(--admin-soft);
+  --font-sans: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+.num { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+.hairline { border-color: var(--line); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top { padding-top: env(safe-area-inset-top); }
+.skeleton { background: linear-gradient(90deg, var(--surface-2), var(--line), var(--surface-2)); background-size: 200% 100%; animation: sk 1.2s ease-in-out infinite; border-radius: 10px; }
+@keyframes sk { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+@keyframes sheet-in { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+.anim-sheet { animation: sheet-in .22s cubic-bezier(.2,.8,.2,1); }
+.anim-fade { animation: fade-in .18s ease-out; }
+@media (prefers-reduced-motion: reduce) { .anim-sheet, .anim-fade, .skeleton { animation: none; } }
+input, select, textarea { font-size: 16px; } /* prevents iOS zoom */
+.field {
+  width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; min-height: 48px; color: var(--ink); outline: none;
+}
+.field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@media print {
+  nav, header, .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+  .card { box-shadow: none; border-color: #ccc; break-inside: avoid; }
+}
