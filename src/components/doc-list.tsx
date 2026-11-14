@@ -27,8 +27,8 @@ export function DocRow({ d }: { d: Doc }) {
           {d.expiry_date ? ` · expires ${formatDate(d.expiry_date, "short")}` : ""}{d.current_version > 1 ? ` · v${d.current_version}` : ""}
         </div>
       </div>
-      <button onClick={() => open(false)} className="size-10 grid place-items-center rounded-full active:bg-surface-2" aria-label="Preview"><Eye className="size-5" /></button>
-      <button onClick={() => open(true)} className="size-10 grid place-items-center rounded-full active:bg-surface-2" aria-label="Download"><Download className="size-5" /></button>
+      <button onClick={() => open(false)} className="size-11 grid place-items-center rounded-full active:bg-surface-2" aria-label="Preview"><Eye className="size-5" /></button>
+      <button onClick={() => open(true)} className="size-11 grid place-items-center rounded-full active:bg-surface-2" aria-label="Download"><Download className="size-5" /></button>
     </div>
   );
 }

@@ -8,7 +8,7 @@
   --surface-2: #f0ede6;
   --ink: #17191c;
   --ink-2: #4a4f57;
-  --ink-3: #868b93;
+  --ink-3: #676c75;
   --line: #e4e0d7;
   --accent: #1d5c4a;
   --accent-ink: #ffffff;
@@ -24,7 +24,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #111314; --surface: #1a1d1f; --surface-2: #222628; --ink: #eef0f1; --ink-2: #b4b9be; --ink-3: #7d838a;
+    --bg: #111314; --surface: #1a1d1f; --surface-2: #222628; --ink: #eef0f1; --ink-2: #b4b9be; --ink-3: #8a9097;
     --line: #2c3134; --accent: #5fbf9b; --accent-ink: #0d1f19; --accent-soft: #1b3129;
     --ok: #5cc48b; --ok-soft: #173023; --warn: #e3a440; --warn-soft: #33270f; --danger: #f07a65; --danger-soft: #3a1c17;
     --info: #7ea6ec; --info-soft: #18243a; --admin: #5fbf9b; --admin-soft: #1b3129;
@@ -34,7 +34,7 @@
   }
 }
 :root[data-theme="dark"] {
-    --bg: #111314; --surface: #1a1d1f; --surface-2: #222628; --ink: #eef0f1; --ink-2: #b4b9be; --ink-3: #7d838a;
+    --bg: #111314; --surface: #1a1d1f; --surface-2: #222628; --ink: #eef0f1; --ink-2: #b4b9be; --ink-3: #8a9097;
     --line: #2c3134; --accent: #5fbf9b; --accent-ink: #0d1f19; --accent-soft: #1b3129;
     --ok: #5cc48b; --ok-soft: #173023; --warn: #e3a440; --warn-soft: #33270f; --danger: #f07a65; --danger-soft: #3a1c17;
     --info: #7ea6ec; --info-soft: #18243a; --admin: #5fbf9b; --admin-soft: #1b3129;
@@ -103,3 +103,7 @@ input, select, textarea { font-size: 16px; } /* prevents iOS zoom */
 /* Ledger signature: ruled rows with a mono date margin */
 .ledger-margin { font-family: ui-monospace, "SF Mono", Menlo, monospace; border-right: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+/* Keyboard focus: always visible, never on mouse/touch */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
+.field:focus-visible { outline: none; }

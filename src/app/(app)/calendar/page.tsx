@@ -62,7 +62,7 @@ function Calendar() {
       <PageHeader title="Calendar" subtitle="Scheduled payments, renewals and deadlines" />
       <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-surface-2 mb-2" role="tablist">
         {(["month", "week", "list"] as const).map((v) => (
-          <button key={v} onClick={() => setView(v)} className={cx("h-9 rounded-xl text-sm font-medium capitalize", view === v ? "bg-surface shadow-sm text-ink" : "text-ink-3")}>{v}</button>
+          <button key={v} onClick={() => setView(v)} className={cx("h-11 rounded-xl text-sm font-medium capitalize", view === v ? "bg-surface shadow-sm text-ink" : "text-ink-3")}>{v}</button>
         ))}
       </div>
       <ProfileSelect />
@@ -77,9 +77,9 @@ function Calendar() {
 
       {view !== "list" && (
         <div className="flex items-center justify-between my-2">
-          <button onClick={() => shift(-1)} className="size-10 grid place-items-center rounded-full active:bg-surface-2" aria-label="Previous"><ChevronLeft /></button>
-          <button onClick={() => { setCursor(today); setDay(today); }} className="font-semibold">{title}</button>
-          <button onClick={() => shift(1)} className="size-10 grid place-items-center rounded-full active:bg-surface-2" aria-label="Next"><ChevronRight /></button>
+          <button onClick={() => shift(-1)} className="size-11 grid place-items-center rounded-full active:bg-surface-2" aria-label="Previous"><ChevronLeft /></button>
+          <button onClick={() => { setCursor(today); setDay(today); }} className="h-11 px-3 font-medium">{title}</button>
+          <button onClick={() => shift(1)} className="size-11 grid place-items-center rounded-full active:bg-surface-2" aria-label="Next"><ChevronRight /></button>
         </div>
       )}
       {ev.error && <ErrorState error={ev.error} retry={ev.reload} />}

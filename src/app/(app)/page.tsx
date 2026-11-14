@@ -95,7 +95,7 @@ export default function Home() {
       )}
 
       {/* C. Upcoming */}
-      <SectionTitle action={<Link href="/calendar?view=list" className="text-sm text-accent font-medium">See all</Link>}>Upcoming</SectionTitle>
+      <SectionTitle action={<Link href="/calendar?view=list" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">See all</Link>}>Upcoming</SectionTitle>
       <div className="-mx-4 px-4 flex gap-2 overflow-x-auto no-scrollbar pb-2">
         {([7, 15, 30] as const).map((d) => <Chip key={d} active={range === d} onClick={() => setRange(d)}>Next {d} days</Chip>)}
         <Chip active={range === "custom"} onClick={() => setRange("custom")}>Custom</Chip>
@@ -134,7 +134,7 @@ export default function Home() {
       )}
 
       {/* D. Overview */}
-      <SectionTitle action={<Link href="/reports" className="text-sm text-accent font-medium">Reports</Link>}>Financial overview</SectionTitle>
+      <SectionTitle action={<Link href="/reports" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Reports</Link>}>Financial overview</SectionTitle>
       {summary.error ? <ErrorState error={summary.error} retry={summary.reload} /> : (
         summary.loading || !summary.data ? <ListSkeleton rows={2} /> : (
           <div className="card px-4">

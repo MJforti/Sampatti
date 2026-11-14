@@ -55,7 +55,7 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
             <Row label="Insurance cover" value={<span className="num">{formatINR(q.data.s.insurance_cover)}</span>} />
             <Row label="Est. net worth" value={<span className="num font-semibold">{formatINR(q.data.s.net_worth_estimate)}</span>} />
           </div>
-          <SectionTitle action={<Link href="/" onClick={() => setSelected(id)} className="text-sm text-accent font-medium">Open dashboard</Link>}>Due in the next 60 days</SectionTitle>
+          <SectionTitle action={<Link href="/" onClick={() => setSelected(id)} className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Open dashboard</Link>}>Due in the next 60 days</SectionTitle>
           <EventList events={q.data.ev} empty="Nothing due." />
           <SectionTitle>Records</SectionTitle>
           <div className="card overflow-hidden">

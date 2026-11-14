@@ -140,7 +140,7 @@ function FieldInput({ f, value, onChange, error, entities, banks, allBanks, vehi
         {entities.map((e) => {
           const on = (value as string[]).includes(e.id);
           return <button type="button" key={e.id} onClick={() => onChange(on ? value.filter((x: string) => x !== e.id) : [...value, e.id])}
-            className={cx("h-9 px-3 rounded-full text-sm border", on ? "bg-accent text-accent-ink border-accent" : "bg-surface border-line text-ink-2")}>{e.name}</button>;
+            className={cx("h-11 px-3.5 rounded-full text-sm border", on ? "bg-accent text-accent-ink border-accent" : "bg-surface border-line text-ink-2")}>{e.name}</button>;
         })}</div></div>);
     default: input = <input id={id} className={cls} value={value ?? ""} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} autoCapitalize={f.key === "registration_number" || f.key === "ifsc" ? "characters" : undefined} />;
   }

@@ -81,7 +81,7 @@ export default function Users() {
                       <div className="flex flex-wrap gap-1.5">{MODS.map(([k, l]) => {
                         const on = p.categories?.includes(k) ?? false;
                         return <button key={k} onClick={() => { const next = on ? (p.categories ?? []).filter((x) => x !== k) : [...(p.categories ?? []), k]; togglePerm(edit, e.id, { categories: next.length ? next : null }); }}
-                          className={cx("h-8 px-2.5 rounded-full text-[13px] border", on ? "bg-accent text-accent-ink border-accent" : "border-line text-ink-2")}>{l}</button>;
+                          className={cx("h-10 px-3 rounded-full text-[13px] border", on ? "bg-accent text-accent-ink border-accent" : "border-line text-ink-2")}>{l}</button>;
                       })}</div>
                       <div className="mt-2 flex gap-4 text-sm">
                         <label className="flex items-center gap-2"><input type="checkbox" checked={p.can_view_documents} onChange={(ev) => togglePerm(edit, e.id, { can_view_documents: ev.target.checked })} />Documents</label>

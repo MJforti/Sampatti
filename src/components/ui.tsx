@@ -21,7 +21,7 @@ export function Button({ variant = "primary", size = "md", loading, className, c
     danger: "bg-danger text-white active:opacity-90",
     admin: "bg-surface border border-line text-ink active:bg-surface-2",
   }[variant];
-  const s = { sm: "h-9 px-3 text-sm rounded-xl", md: "h-12 px-4 text-[15px] rounded-2xl", lg: "h-14 px-5 text-base rounded-2xl" }[size];
+  const s = { sm: "h-11 px-3.5 text-sm rounded-xl", md: "h-12 px-4 text-[15px] rounded-2xl", lg: "h-14 px-5 text-base rounded-2xl" }[size];
   return (
     <button
       {...rest}
@@ -130,7 +130,7 @@ export function SectionTitle({ children, action }: { children: ReactNode; action
 export function Chip({ active, onClick, children }: { active?: boolean; onClick?: () => void; children: ReactNode }) {
   return (
     <button onClick={onClick}
-      className={cx("h-9 px-3.5 rounded-full text-sm font-medium whitespace-nowrap border transition",
+      className={cx("h-11 px-4 rounded-full text-sm font-medium whitespace-nowrap border transition",
         active ? "bg-ink text-bg border-ink" : "bg-surface text-ink-2 border-line")}>
       {children}
     </button>

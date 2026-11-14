@@ -49,11 +49,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {isAdminMode && (
         <div className="sticky top-0 z-40 bg-bg/95 backdrop-blur border-b hairline safe-top">
-          <div className="mx-auto max-w-3xl flex items-center gap-2 px-4 h-10 text-sm text-ink-2">
+          <div className="mx-auto max-w-3xl flex items-center gap-2 px-4 h-12 text-sm text-ink-2">
             <span className="size-2 rounded-full bg-accent" aria-hidden />
             <span className="font-medium text-ink">Admin Mode</span>
             <AdminCountdown expires={admin!.expires_at!} />
-            <button onClick={lockAdmin} className="ml-auto inline-flex items-center gap-1 font-medium h-8 px-3 rounded-lg border hairline bg-surface active:bg-surface-2">
+            <button onClick={lockAdmin} className="ml-auto inline-flex items-center gap-1 font-medium h-11 px-3.5 rounded-xl border hairline bg-surface active:bg-surface-2">
               <Lock className="size-3.5" /> Lock
             </button>
           </div>

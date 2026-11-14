@@ -59,7 +59,7 @@ export default function Profiles() {
               <div className="text-[13px] text-ink-3">{members.length} member{members.length === 1 ? "" : "s"}</div>
             </div>
             {isAdminMode && family && (
-              <button onClick={() => { setFamName(family.name); setFamSheet(family); }} className="size-9 grid place-items-center rounded-full active:bg-surface-2" aria-label={`Rename ${family.name}`}><Pencil className="size-4 text-ink-2" /></button>
+              <button onClick={() => { setFamName(family.name); setFamSheet(family); }} className="size-11 grid place-items-center rounded-full active:bg-surface-2" aria-label={`Rename ${family.name}`}><Pencil className="size-4 text-ink-2" /></button>
             )}
           </div>
 
@@ -70,8 +70,8 @@ export default function Profiles() {
                 <div className="mono text-[20px] tracking-[0.12em]">{family.access_code}</div>
                 <div className="text-[12px] text-ink-3">Share it so someone can join this family when they create an account</div>
               </div>
-              <button onClick={() => copy(family.access_code!)} className="size-10 grid place-items-center rounded-full active:bg-surface-2" aria-label="Copy code"><Copy className="size-[18px]" /></button>
-              <button onClick={() => setRegen(family)} className="size-10 grid place-items-center rounded-full active:bg-surface-2" aria-label="New code"><RefreshCw className="size-[18px]" /></button>
+              <button onClick={() => copy(family.access_code!)} className="size-11 grid place-items-center rounded-full active:bg-surface-2" aria-label="Copy code"><Copy className="size-[18px]" /></button>
+              <button onClick={() => setRegen(family)} className="size-11 grid place-items-center rounded-full active:bg-surface-2" aria-label="New code"><RefreshCw className="size-[18px]" /></button>
             </div>
           )}
 
