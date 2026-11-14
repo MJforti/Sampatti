@@ -213,3 +213,23 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 do $$ begin perform delete_entity((select id from family_entities limit 1), 'x'); raise exception 'should fail';
 exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - non-admin cannot delete profiles'; end $$;
 select pg_temp.act_as(null);
+
+-- Families & access codes
+select pg_temp.act_as(null);
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000c', 'cousin@example.com');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select pg_temp.ok((select count(*) = 0 from family_entities), 'new user sees no profiles');
+select pg_temp.ok((select count(*) = 0 from family_codes()), 'non-admin cannot read family codes');
+do $$ begin perform join_family('XXXX-XXXX'); raise exception 'should fail'; exception when others then
+  if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - wrong code rejected'; end $$;
+select pg_temp.act_as(null);
+select set_config('t.code', (select access_code from families where name = 'Jain Family'), false);
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select join_family(lower(replace(current_setting('t.code'), '-', '')));
+select pg_temp.ok((select count(*) = (select count(*) from family_entities) and count(*) > 0 from family_entities), 'joining with code grants all family members');
+select pg_temp.act_as(null);
+select pg_temp.ok((select role = 'family_member' from user_profiles where id = '00000000-0000-0000-0000-00000000000c'), 'joiner becomes family member');
+insert into families (name) values ('Other Family');
+update family_entities set family_id = (select id from families where name = 'Other Family') where name = 'Rajesh Bimal and Associates';
+select pg_temp.ok(not exists (select 1 from entity_permissions ep join family_entities e on e.id = ep.entity_id
+  where ep.user_id = '00000000-0000-0000-0000-00000000000c' and e.name = 'Rajesh Bimal and Associates'), 'moving a member out of the family withdraws access');

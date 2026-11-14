@@ -56,6 +56,9 @@ export default function Settings() {
         </div>
       </div>
 
+      <SectionTitle>Families</SectionTitle>
+      <JoinFamily />
+
       <SectionTitle>Notifications</SectionTitle>
       {prefs && (
         <div className="card px-4 py-2">
@@ -126,6 +129,28 @@ export default function Settings() {
         </>
       )}
       <p className="mt-8 text-center text-xs text-ink-3">Sampatti never stores bank passwords, PINs, OTPs or net-banking credentials.</p>
+    </div>
+  );
+}
+
+function JoinFamily() {
+  const { families, toast, reloadRefs } = useApp();
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="card px-4 py-4 space-y-3">
+      {families.length > 0 && <div className="text-sm text-ink-2">You’re in: <span className="text-ink font-medium">{families.map((f) => f.name).join(", ")}</span></div>}
+      <label className="block"><span className="text-sm font-medium text-ink-2">Join a family with its access code</span>
+        <div className="flex gap-2 mt-1.5">
+          <input className="field mono uppercase tracking-[0.12em]" placeholder="ABCD-2345" autoCapitalize="characters" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} />
+          <Button variant="secondary" loading={busy} onClick={async () => {
+            setBusy(true);
+            const { data, error } = await supabase().rpc("join_family", { p_code: code });
+            setBusy(false);
+            if (error) return toast(friendlyError(error), "error");
+            setCode(""); await reloadRefs(); toast(`You joined ${data.family}`);
+          }}>Join</Button>
+        </div></label>
     </div>
   );
 }

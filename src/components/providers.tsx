@@ -4,7 +4,8 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { DEFAULT_TZ } from "@/lib/dates";
 
-export type Entity = { id: string; name: string; entity_type: string; is_active: boolean; email?: string | null; phone?: string | null; notes?: string | null; pan_masked?: string | null; sort_order: number };
+export type Family = { id: string; name: string; is_active: boolean; access_code?: string };
+export type Entity = { id: string; family_id?: string | null; name: string; entity_type: string; is_active: boolean; email?: string | null; phone?: string | null; notes?: string | null; pan_masked?: string | null; sort_order: number };
 export type Bank = { id: string; entity_id: string; bank_name: string; account_last4: string | null; nickname: string | null };
 export type Vehicle = { id: string; entity_id: string; registration_number: string };
 export type UserProfile = { id: string; email: string; full_name: string | null; role: "admin" | "family_member" | "accountant" | "read_only"; is_active: boolean };
@@ -19,6 +20,7 @@ type Ctx = {
   profile: UserProfile | null;
   loading: boolean;
   entities: Entity[];
+  families: Family[];
   banks: Bank[];
   vehicles: Vehicle[];
   settings: Settings | null;
@@ -58,6 +60,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [entities, setEntities] = useState<Entity[]>([]);
+  const [families, setFamilies] = useState<Family[]>([]);
   const [banks, setBanks] = useState<Bank[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -75,12 +78,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const reloadRefs = useCallback(async () => {
-    const [e, b, v, s] = await Promise.all([
+    const [e, b, v, s, fam, codes] = await Promise.all([
       sb.from("family_entities").select("*").order("sort_order").order("name"),
       sb.from("bank_accounts").select("id, entity_id, bank_name, account_last4, nickname").is("archived_at", null).order("bank_name"),
       sb.from("vehicles").select("id, entity_id, registration_number").is("archived_at", null),
       sb.rpc("get_app_settings"),
+      sb.from("families").select("id, name, is_active").order("name"),
+      sb.rpc("family_codes"),
     ]);
+    if (fam.data) setFamilies(fam.data.map((f: Family) => ({ ...f, access_code: (codes.data ?? []).find((c: { id: string }) => c.id === f.id)?.access_code })));
     if (e.data) setEntities(e.data);
     if (b.data) setBanks(b.data);
     if (v.data) setVehicles(v.data);
@@ -159,7 +165,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<Ctx>(() => ({
-    user, profile, loading, entities, banks, vehicles, settings, tz: settings?.timezone ?? DEFAULT_TZ, reloadRefs,
+    user, profile, loading, entities, families, banks, vehicles, settings, tz: settings?.timezone ?? DEFAULT_TZ, reloadRefs,
     entityName: (id) => entities.find((e) => e.id === id)?.name ?? "—",
     bankLabel: (id) => {
       const b = banks.find((x) => x.id === id);
@@ -167,7 +173,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     },
     selected: entities.some((e) => e.id === selected) ? selected : null, setSelected,
     admin, isAdminMode, refreshAdmin, setAdmin, lockAdmin, pinOpen, setPinOpen, toast, unread, refreshUnread,
-  }), [user, profile, loading, entities, banks, vehicles, settings, reloadRefs, selected, setSelected, admin, isAdminMode, refreshAdmin, lockAdmin, pinOpen, toast, unread, refreshUnread]);
+  }), [user, profile, loading, entities, families, banks, vehicles, settings, reloadRefs, selected, setSelected, admin, isAdminMode, refreshAdmin, lockAdmin, pinOpen, toast, unread, refreshUnread]);
 
   return (
     <AppCtx.Provider value={value}>

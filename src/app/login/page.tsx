@@ -8,6 +8,7 @@ export default function Login() {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
+  const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,6 +28,10 @@ export default function Login() {
     }
     const { error } = await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error) { setMsg(error.message === "Invalid login credentials" ? "Email or password is incorrect" : error.message); setBusy(false); return; }
+    if (mode === "signup" && code.trim()) {
+      const j = await sb.rpc("join_family", { p_code: code });
+      if (j.error) { setMsg(`Account created, but: ${j.error.message}. You can add the code later in Settings.`); setBusy(false); setTimeout(() => router.replace("/"), 2500); return; }
+    }
     router.replace("/"); router.refresh();
   };
 
@@ -56,11 +61,16 @@ export default function Login() {
           <input className="field mt-1.5" type="password" autoComplete={signup ? "new-password" : "current-password"} required minLength={signup ? 8 : undefined}
             value={password} onChange={(e) => setPassword(e.target.value)} />
           {signup && <span className="block mt-1 text-xs text-ink-3">At least 8 characters</span>}</label>
+        {signup && (
+          <label className="block"><span className="text-sm font-medium text-ink-2">Family access code</span>
+            <input className="field mt-1.5 mono uppercase tracking-[0.12em]" placeholder="ABCD-2345" autoCapitalize="characters" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} />
+            <span className="block mt-1 text-xs text-ink-3">From your family’s administrator. Gives you access to that family</span></label>
+        )}
         {msg && <p className="text-sm text-danger" role="alert">{msg}</p>}
         <Button type="submit" size="lg" className="w-full" loading={busy}>{signup ? "Create account" : "Sign in"}</Button>
       </form>
       <p className="mt-10 text-xs text-ink-3 text-center">
-        {signup ? "New accounts can’t see anything until the administrator gives access" : "Forgot your password? Ask the administrator to reset it"}
+        {signup ? "Without a family code you’ll see nothing until the administrator gives access" : "Forgot your password? Ask the administrator to reset it"}
       </p>
     </main>
   );
