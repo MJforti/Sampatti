@@ -41,7 +41,7 @@ export default function More() {
           {isAdminMode && (
             <div className="card overflow-hidden mb-2">
               <Link href="/admin/users" className="flex items-center gap-3 px-4 py-3.5 border-b hairline"><UserCog className="size-5 text-admin" /><span className="flex-1">Users & permissions</span><ChevronRight className="size-4 text-ink-3" /></Link>
-              <Link href="/admin/audit" className="flex items-center gap-3 px-4 py-3.5"><ScrollText className="size-5 text-admin" /><span className="flex-1">Audit log & delivery history</span><ChevronRight className="size-4 text-ink-3" /></Link>
+              <Link href="/admin/audit" className="flex items-center gap-3 px-4 py-3.5"><ScrollText className="size-5 text-admin" /><span className="flex-1">Activity log</span><ChevronRight className="size-4 text-ink-3" /></Link>
             </div>
           )}
           <AdminToggle />
