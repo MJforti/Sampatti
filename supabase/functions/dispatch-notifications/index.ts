@@ -8,7 +8,7 @@
 //   RESEND_API_KEY       email provider key (https://resend.com). Optional: without it email rows fail with a clear error.
 //   EMAIL_FROM           e.g. "Sampatti <reminders@yourdomain.in>"
 //   VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT   web push (npx web-push generate-vapid-keys)
-//   APP_URL              public URL of the PWA, used for links in emails
+//   APP_URL              optional; defaults to admin_settings.app_url
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import webpush from "npm:web-push@3.6.7";
 
@@ -38,16 +38,25 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
+let appUrl: string | null = null;
+async function getAppUrl() {
+  if (appUrl !== null) return appUrl;
+  const { data } = await supabase.from("admin_settings").select("app_url").eq("id", 1).maybeSingle();
+  appUrl = env("APP_URL") || data?.app_url || "";
+  return appUrl;
+}
+
 async function sendEmail(row: Claimed) {
   const key = env("RESEND_API_KEY");
   if (!key) throw new Error("RESEND_API_KEY not configured");
-  const link = env("APP_URL") ? `${env("APP_URL")}${row.data.url ?? ""}` : "";
+  const base = await getAppUrl();
+  const link = base ? `${base}${row.data.url ?? ""}` : "";
   const lines = row.body.split("\n").map((l) => `<div style="margin:2px 0">${escapeHtml(l)}</div>`).join("");
-  const html = `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:12px">
-    <div style="font-size:12px;color:#666;letter-spacing:.04em">SAMPATTI REMINDER</div>
-    <h2 style="margin:8px 0 16px;font-size:18px">${escapeHtml(row.title)}</h2>
-    <div style="font-size:14px;color:#222;line-height:1.5">${lines}</div>
-    ${link ? `<a href="${escapeHtml(link)}" style="display:inline-block;margin-top:20px;padding:10px 16px;background:#14532d;color:#fff;border-radius:8px;text-decoration:none">Open in Sampatti</a>` : ""}
+  const html = `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e4e0d7;border-radius:16px;background:#fff">
+    <div style="font-size:13px;color:#868b93">Sampatti reminder</div>
+    <h2 style="margin:8px 0 16px;font-size:18px;font-weight:500;color:#17191c">${escapeHtml(row.title)}</h2>
+    <div style="font-size:14px;color:#4a4f57;line-height:1.5">${lines}</div>
+    ${link ? `<a href="${escapeHtml(link)}" style="display:inline-block;margin-top:20px;padding:10px 16px;background:#1d5c4a;color:#fff;border-radius:10px;text-decoration:none">Open in Sampatti</a>` : ""}
   </div>`;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
