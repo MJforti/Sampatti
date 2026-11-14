@@ -47,16 +47,24 @@ export default function Home() {
   const overdue = all.filter((e) => e.event_date < today);
   const urgentAmount = sumPaise(urgent.filter((e) => !isInflow(e.category)).map((e) => e.amount_paise));
 
-  const hour = Number(new Intl.DateTimeFormat("en-IN", { timeZone: tz, hour: "numeric", hour12: false }).format(new Date()));
-  const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const first = profile?.full_name?.split(" ")[0];
+  const monthLabel = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(today + "T00:00:00Z"));
+  // Split the period's outflow by bank account (largest first) for the ledger bar
+  const byBank = new Map<string, { label: string; v: number }>();
+  for (const e of inRange) {
+    if (isInflow(e.category) || !e.amount_paise) continue;
+    const k = e.bank_account_id ?? "none";
+    const cur = byBank.get(k) ?? { label: e.bank_name ? `${e.bank_name}${e.account_last4 ? " ••" + e.account_last4 : ""}` : "No account linked", v: 0 };
+    cur.v += e.amount_paise; byBank.set(k, cur);
+  }
+  const banks = [...byBank.values()].sort((a, b) => b.v - a.v);
+  const SHADES = [1, 0.62, 0.38, 0.22];
 
   return (
     <div>
       <header className="flex items-center justify-between pt-2">
         <div>
-          <p className="text-sm text-ink-3">{greet}{first ? `, ${first}` : ""}</p>
-          <h1 className="text-[26px] font-semibold tracking-tight">{selected ? entityName(selected) : "Family overview"}</h1>
+          <p className="text-sm text-ink-3">{monthLabel}</p>
+          <h1 className="text-[28px] font-medium tracking-tight">{selected ? entityName(selected) : "Family"}</h1>
         </div>
         <Link href="/reminders" className="relative size-11 grid place-items-center rounded-full bg-surface border hairline" aria-label={`Notifications, ${unread} unread`}>
           <Bell className="size-5" />
@@ -100,9 +108,26 @@ export default function Home() {
       )}
       {!events.loading && !events.error && (
         <>
-          <div className="card px-4 py-3 mb-2 flex items-baseline justify-between">
-            <span className="text-sm text-ink-3">Total to be paid · {inRange.length} item{inRange.length === 1 ? "" : "s"}</span>
-            <span className="num text-xl font-semibold">{formatINR(outflow)}</span>
+          <div className="card px-5 pt-5 pb-4 mb-2">
+            <div className="text-sm text-ink-3">To be paid {range === "custom" ? "in this range" : `in the next ${range} days`}</div>
+            <div className="num text-[40px] leading-[48px] font-medium tracking-tight mt-1">{formatINR(outflow)}</div>
+            <div className="text-[13px] text-ink-3">{inRange.length} item{inRange.length === 1 ? "" : "s"}{banks.length ? ` from ${banks.length} account${banks.length === 1 ? "" : "s"}` : ""}</div>
+            {banks.length > 0 && outflow > 0 && (
+              <>
+                <div className="mt-4 flex h-2 gap-[2px] overflow-hidden rounded" role="img" aria-label="Outflow by bank account">
+                  {banks.map((b, i) => <div key={b.label} title={`${b.label}: ${formatINR(b.v)}`} style={{ width: `${(b.v / outflow) * 100}%`, background: "var(--accent)", opacity: SHADES[Math.min(i, 3)] }} />)}
+                </div>
+                <ul className="mt-3 space-y-1.5">
+                  {banks.slice(0, 4).map((b, i) => (
+                    <li key={b.label} className="flex items-center gap-2 text-[13px]">
+                      <span className="size-2 rounded-sm" style={{ background: "var(--accent)", opacity: SHADES[Math.min(i, 3)] }} />
+                      <span className="text-ink-2 truncate flex-1">{b.label}</span>
+                      <span className="num text-ink">{formatINR(b.v)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
           <EventList events={upcoming} empty={range === "custom" ? "Nothing in this range." : "Nothing else due in this period."} />
         </>
@@ -111,20 +136,17 @@ export default function Home() {
       {/* D. Overview */}
       <SectionTitle action={<Link href="/reports" className="text-sm text-accent font-medium">Reports</Link>}>Financial overview</SectionTitle>
       {summary.error ? <ErrorState error={summary.error} retry={summary.reload} /> : (
-        <div className="grid grid-cols-2 gap-2">
-          {summary.loading || !summary.data ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[76px]" />) : (
-            <>
-              <Stat label="Invested" value={summary.data.invested as number} />
-              <Stat label="Current value" value={summary.data.current_value as number} note={summary.data.values_verified ? undefined : "Includes estimates"} />
-              <Stat label="Loans outstanding" value={summary.data.loans_outstanding as number} />
-              <Stat label="Monthly EMIs" value={summary.data.monthly_emi as number} />
-              <Stat label="Monthly SIPs" value={summary.data.monthly_sip as number} />
-              <Stat label="Due in 30 days" value={summary.data.upcoming_30 as number} />
-              <Stat label="Insurance cover" value={summary.data.insurance_cover as number} />
-              <Stat label="Est. net worth" value={summary.data.net_worth_estimate as number} note="Investments − loans" />
-            </>
-          )}
-        </div>
+        summary.loading || !summary.data ? <ListSkeleton rows={2} /> : (
+          <div className="card px-4">
+            <Line label="Investments, current value" value={summary.data.current_value as number} note={summary.data.values_verified ? undefined : "includes estimates"} />
+            <Line label="Invested" value={summary.data.invested as number} />
+            <Line label="Loans outstanding" value={summary.data.loans_outstanding as number} />
+            <Line label="EMIs per month" value={summary.data.monthly_emi as number} />
+            <Line label="SIPs per month" value={summary.data.monthly_sip as number} />
+            <Line label="Insurance cover" value={summary.data.insurance_cover as number} />
+            <Line label="Estimated net worth" value={summary.data.net_worth_estimate as number} note="investments − loans" strong />
+          </div>
+        )
       )}
 
       {/* Completed */}
@@ -141,8 +163,8 @@ export default function Home() {
       </div>
       {isAdminMode && (
         <div className="mt-2 grid grid-cols-2 gap-2">
-          <Link href="/m/obligations?new=1" className="card h-12 flex items-center justify-center gap-2 text-sm font-medium text-admin"><Plus className="size-4" />Recurring payment</Link>
-          <Link href="/more" className="card h-12 flex items-center justify-center gap-2 text-sm font-medium text-admin"><Plus className="size-4" />Add a record</Link>
+          <Link href="/m/obligations?new=1" className="card h-12 flex items-center justify-center gap-2 text-sm font-medium"><Plus className="size-4" />Recurring payment</Link>
+          <Link href="/more" className="card h-12 flex items-center justify-center gap-2 text-sm font-medium"><Plus className="size-4" />Add a record</Link>
         </div>
       )}
       <div className="mt-6 lg:hidden"><AdminToggle /></div>
@@ -150,19 +172,18 @@ export default function Home() {
   );
 }
 
-function Stat({ label, value, note }: { label: string; value: number; note?: string }) {
+function Line({ label, value, note, strong }: { label: string; value: number; note?: string; strong?: boolean }) {
   return (
-    <div className="card px-4 py-3">
-      <div className="text-[12px] text-ink-3">{label}</div>
-      <div className="num text-lg font-semibold mt-0.5" title={formatINR(value)}>{formatINRCompact(value)}</div>
-      {note && <div className="text-[11px] text-ink-3">{note}</div>}
+    <div className="flex items-baseline justify-between gap-4 py-3 border-b hairline last:border-0">
+      <div className="text-[14px] text-ink-2">{label}{note && <span className="text-ink-3"> · {note}</span>}</div>
+      <div className={cx("num text-[15px] whitespace-nowrap shrink-0", strong ? "font-medium text-ink" : "text-ink")}>{formatINR(value)}</div>
     </div>
   );
 }
 function Quick({ href, icon: Icon, label }: { href: string; icon: typeof Bell; label: string }) {
   return (
     <Link href={href} className="card py-3 flex flex-col items-center gap-1.5 text-[12px] text-ink-2 active:bg-surface-2">
-      <Icon className="size-5 text-accent" strokeWidth={1.9} />{label}
+      <Icon className="size-[18px] text-ink-2" strokeWidth={1.5} />{label}
     </Link>
   );
 }

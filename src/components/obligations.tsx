@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
-import { ChevronRight, ShieldCheck, Landmark, TrendingUp, Car, Receipt, CircleDot } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { daysBetween, formatDate, relativeDays, todayISO } from "@/lib/dates";
-import { CATEGORY_LABEL, categoryGroup, isInflow, type TxnStatus } from "@/lib/status";
+import { isInflow, type TxnStatus } from "@/lib/status";
 import { StatusBadge, cx } from "./ui";
 import { useApp } from "./providers";
 
@@ -16,39 +15,39 @@ export type CalEvent = {
 
 export const EVENT_COLUMNS = "*";
 
-const ICONS = { insurance: ShieldCheck, loan: Landmark, invest: TrendingUp, vehicle: Car, tax: Receipt, other: CircleDot };
 
-export function EventRow({ e, compact }: { e: CalEvent; compact?: boolean }) {
+export function EventRow({ e }: { e: CalEvent; compact?: boolean }) {
   const { tz } = useApp();
   const days = daysBetween(todayISO(tz), e.event_date);
-  const g = categoryGroup(e.category);
-  const Icon = ICONS[g];
   const open = !["paid", "cancelled", "renewed"].includes(e.status);
-  const urgent = open && days <= 3;
+  const late = open && days < 0;
+  const soon = open && days >= 0 && days <= 3;
+  const [, m, d] = e.event_date.split("-");
+  const mon = new Intl.DateTimeFormat("en-IN", { month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(2000, Number(m) - 1, 1)));
+  const showBadge = e.status !== "upcoming";
   return (
-    <Link href={`/tx/${e.id}`} className="flex items-center gap-3 px-4 py-3.5 active:bg-surface-2 border-b hairline last:border-0">
-      <span className="size-10 shrink-0 grid place-items-center rounded-xl" style={{ background: `color-mix(in srgb, var(--c-${g}) 12%, transparent)`, color: `var(--c-${g})` }}>
-        <Icon className="size-5" strokeWidth={1.9} />
-      </span>
-      <div className="min-w-0 flex-1">
+    <Link href={`/tx/${e.id}`} className="flex items-stretch active:bg-surface-2 transition-colors border-b hairline last:border-0">
+      <div className={cx("ledger-margin w-14 shrink-0 flex flex-col items-center justify-center py-3 num", late ? "text-danger" : soon ? "text-warn" : "text-ink-3")}>
+        <span className="text-[17px] leading-5 text-ink">{Number(d)}</span>
+        <span className="text-[11px] leading-4">{mon}</span>
+      </div>
+      <div className="min-w-0 flex-1 px-3 py-3">
         <div className="text-[15px] font-medium truncate">{e.title}</div>
         <div className="text-[13px] text-ink-3 truncate">
           {e.entity_name}{e.bank_name ? ` · ${e.bank_name}${e.account_last4 ? " ••" + e.account_last4 : ""}` : ""}
         </div>
-        {!compact && <div className="mt-1 flex items-center gap-1.5 flex-wrap"><StatusBadge status={e.status} />
-          <span className="text-[11px] text-ink-3">{CATEGORY_LABEL[e.category] ?? e.category}</span></div>}
+        {showBadge && <div className="mt-1"><StatusBadge status={e.status} /></div>}
       </div>
-      <div className="text-right shrink-0">
+      <div className="text-right shrink-0 pr-4 py-3 flex flex-col justify-center">
         {e.amount_paise != null && (
-          <div className={cx("num text-[15px] font-semibold", isInflow(e.category) && "text-ok")}>
+          <div className={cx("num text-[15px] font-medium", isInflow(e.category) && "text-ok")}>
             {isInflow(e.category) ? "+" : ""}{formatINR(e.amount_paise)}
           </div>
         )}
-        <div className={cx("text-[12px] num", open && days < 0 ? "text-danger font-semibold" : urgent ? "text-warn font-semibold" : "text-ink-3")}>
-          {open ? relativeDays(days) : formatDate(e.paid_on ?? e.event_date, "short")}
+        <div className={cx("text-[12px] num", late ? "text-danger font-medium" : soon ? "text-warn font-medium" : "text-ink-3")}>
+          {open ? relativeDays(days) : `Paid ${formatDate(e.paid_on ?? e.event_date, "short")}`}
         </div>
       </div>
-      <ChevronRight className="size-4 text-ink-3 shrink-0" />
     </Link>
   );
 }

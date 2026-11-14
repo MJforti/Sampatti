@@ -17,7 +17,7 @@
   --warn: #a15c00;   --warn-soft: #fbefd9;
   --danger: #b3321f; --danger-soft: #fbe5e1;
   --info: #2b5aa8;   --info-soft: #e5ecf8;
-  --admin: #6b3fa0;  --admin-soft: #efe7f8;
+  --admin: #1d5c4a;  --admin-soft: #e3efe9;
   --c-insurance: #2b5aa8; --c-loan: #b3321f; --c-invest: #1f7a4d; --c-vehicle: #a15c00; --c-tax: #6b3fa0; --c-other: #5b6270;
   --shadow: 0 1px 2px rgba(23, 25, 28, .04), 0 4px 16px rgba(23, 25, 28, .05);
   color-scheme: light;
@@ -27,7 +27,7 @@
     --bg: #111314; --surface: #1a1d1f; --surface-2: #222628; --ink: #eef0f1; --ink-2: #b4b9be; --ink-3: #7d838a;
     --line: #2c3134; --accent: #5fbf9b; --accent-ink: #0d1f19; --accent-soft: #1b3129;
     --ok: #5cc48b; --ok-soft: #173023; --warn: #e3a440; --warn-soft: #33270f; --danger: #f07a65; --danger-soft: #3a1c17;
-    --info: #7ea6ec; --info-soft: #18243a; --admin: #b996e6; --admin-soft: #2a2036;
+    --info: #7ea6ec; --info-soft: #18243a; --admin: #5fbf9b; --admin-soft: #1b3129;
     --c-insurance: #7ea6ec; --c-loan: #f07a65; --c-invest: #5cc48b; --c-vehicle: #e3a440; --c-tax: #b996e6; --c-other: #9aa1aa;
     --shadow: 0 1px 2px rgba(0,0,0,.3);
     color-scheme: dark;
@@ -65,7 +65,7 @@ body {
 .hairline { border-color: var(--line); }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-top { padding-top: env(safe-area-inset-top); }
-.skeleton { background: linear-gradient(90deg, var(--surface-2), var(--line), var(--surface-2)); background-size: 200% 100%; animation: sk 1.2s ease-in-out infinite; border-radius: 10px; }
+.skeleton { background: var(--surface-2); border-radius: 12px; }
 @keyframes sk { from { background-position: 200% 0 } to { background-position: -200% 0 } }
 @keyframes sheet-in { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
 @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
@@ -86,3 +86,7 @@ input, select, textarea { font-size: 16px; } /* prevents iOS zoom */
   body { background: #fff; color: #000; }
   .card { box-shadow: none; border-color: #ccc; break-inside: avoid; }
 }
+
+/* Ledger signature: ruled rows with a mono date margin */
+.ledger-margin { font-family: ui-monospace, "SF Mono", Menlo, monospace; border-right: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }

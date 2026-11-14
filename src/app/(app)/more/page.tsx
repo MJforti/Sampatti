@@ -28,7 +28,7 @@ export default function More() {
       <div className="card overflow-hidden">
         {ITEMS.map(([href, title, sub, Icon]) => (
           <Link key={href} href={href} className="flex items-center gap-3 px-4 py-3.5 border-b hairline last:border-0 active:bg-surface-2">
-            <span className="size-10 grid place-items-center rounded-xl bg-accent-soft text-accent"><Icon className="size-5" strokeWidth={1.9} /></span>
+            <span className="size-10 grid place-items-center rounded-xl bg-surface-2 text-ink-2"><Icon className="size-[18px]" strokeWidth={1.5} /></span>
             <div className="flex-1 min-w-0"><div className="text-[15px] font-medium">{title}</div><div className="text-[13px] text-ink-3 truncate">{sub}</div></div>
             <ChevronRight className="size-4 text-ink-3" />
           </Link>

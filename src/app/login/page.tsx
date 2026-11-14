@@ -30,9 +30,8 @@ export default function Login() {
   return (
     <main className="min-h-dvh flex flex-col justify-center px-6 max-w-sm mx-auto safe-top safe-bottom">
       <div className="mb-10">
-        <div className="size-12 rounded-2xl bg-accent text-accent-ink grid place-items-center text-xl font-semibold">स</div>
-        <h1 className="mt-5 text-3xl font-semibold tracking-tight">Sampatti</h1>
-        <p className="mt-1 text-ink-3">Your family’s payments, renewals and deadlines — in one place.</p>
+        <h1 className="text-3xl font-medium tracking-tight">Sampatti</h1>
+        <p className="mt-1 text-ink-3">What the family owes, when, and from which account</p>
       </div>
       <form onSubmit={submit} className="space-y-3">
         <label className="block"><span className="text-sm font-medium text-ink-2">Email</span>

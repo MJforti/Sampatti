@@ -19,14 +19,14 @@ export function Button({ variant = "primary", size = "md", loading, className, c
     secondary: "bg-surface border border-line text-ink active:bg-surface-2",
     ghost: "text-ink-2 active:bg-surface-2",
     danger: "bg-danger text-white active:opacity-90",
-    admin: "bg-admin text-white active:opacity-90",
+    admin: "bg-surface border border-line text-ink active:bg-surface-2",
   }[variant];
   const s = { sm: "h-9 px-3 text-sm rounded-xl", md: "h-12 px-4 text-[15px] rounded-2xl", lg: "h-14 px-5 text-base rounded-2xl" }[size];
   return (
     <button
       {...rest}
       disabled={disabled || loading}
-      className={cx("inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap transition select-none disabled:opacity-50", v, s, className)}
+      className={cx("inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap transition-[background-color,opacity,transform] active:scale-[0.98] select-none disabled:opacity-50", v, s, className)}
     >
       {loading && <Loader2 className="size-4 animate-spin" />}
       {children}
@@ -121,7 +121,7 @@ export function ErrorState({ error, retry }: { error: string; retry?: () => void
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-end justify-between mb-2 mt-6 px-1">
-      <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-3">{children}</h2>
+      <h2 className="text-[15px] font-medium text-ink-2">{children}</h2>
       {action}
     </div>
   );
@@ -142,7 +142,7 @@ export function PageHeader({ title, subtitle, back, action }: { title: string; s
     <div className="flex items-start justify-between gap-3 pt-2 pb-3">
       <div className="min-w-0">
         {back && <Link href={back} className="text-sm text-accent font-medium">‹ Back</Link>}
-        <h1 className="text-[26px] leading-tight font-semibold tracking-tight truncate">{title}</h1>
+        <h1 className="text-[28px] leading-tight font-medium tracking-tight truncate">{title}</h1>
         {subtitle && <p className="text-sm text-ink-3 mt-0.5">{subtitle}</p>}
       </div>
       {action}

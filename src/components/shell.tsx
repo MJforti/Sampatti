@@ -33,8 +33,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-dvh lg:pl-64">
       {/* Desktop side rail */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col border-r hairline bg-surface px-4 py-6">
-        <div className="px-2 text-xl font-semibold tracking-tight">Sampatti</div>
-        <div className="px-2 text-xs text-ink-3">Family finances</div>
+        <div className="px-2 text-xl font-medium tracking-tight">Sampatti</div>
+        <div className="px-2 text-xs text-ink-3">Family ledger</div>
         <nav className="mt-8 space-y-1">
           {TABS.map((t) => (
             <Link key={t.href} href={t.href} className={cx("flex items-center gap-3 h-11 px-3 rounded-xl text-[15px]", active(t.href) ? "bg-accent-soft text-accent font-semibold" : "text-ink-2 hover:bg-surface-2")}>
@@ -47,12 +47,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {isAdminMode && (
-        <div className="sticky top-0 z-40 bg-admin text-white safe-top">
-          <div className="mx-auto max-w-3xl flex items-center gap-2 px-4 h-10 text-sm">
-            <ShieldCheck className="size-4" />
-            <span className="font-semibold">Admin Mode</span>
+        <div className="sticky top-0 z-40 bg-bg/95 backdrop-blur border-b hairline safe-top">
+          <div className="mx-auto max-w-3xl flex items-center gap-2 px-4 h-10 text-sm text-ink-2">
+            <span className="size-2 rounded-full bg-accent" aria-hidden />
+            <span className="font-medium text-ink">Admin Mode</span>
             <AdminCountdown expires={admin!.expires_at!} />
-            <button onClick={lockAdmin} className="ml-auto inline-flex items-center gap-1 font-semibold h-8 px-3 rounded-full bg-white/15 active:bg-white/25">
+            <button onClick={lockAdmin} className="ml-auto inline-flex items-center gap-1 font-medium h-8 px-3 rounded-lg border hairline bg-surface active:bg-surface-2">
               <Lock className="size-3.5" /> Lock
             </button>
           </div>
@@ -153,7 +153,7 @@ function PinSheet() {
         {admin?.locked_until && !bootstrap && <p className="mt-2 text-sm text-danger">Locked until {new Date(admin.locked_until).toLocaleTimeString("en-IN")}</p>}
         <div className="mt-5 flex justify-center gap-4" aria-label={`${pin.length} of 4 digits entered`}>
           {[0, 1, 2, 3].map((i) => (
-            <span key={i} className={cx("size-4 rounded-full border-2", i < pin.length ? "bg-admin border-admin" : "border-line")} />
+            <span key={i} className={cx("size-4 rounded-full border-2", i < pin.length ? "bg-accent border-accent" : "border-line")} />
           ))}
         </div>
         <p className="mt-3 h-5 text-sm text-danger" role="alert">{error}</p>
