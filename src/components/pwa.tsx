@@ -31,7 +31,7 @@ function b64ToUint8(b64: string) {
 /** Ask permission, subscribe, and store the subscription in Supabase (RLS: own rows only). */
 export async function enablePush(userId: string) {
   const perm = await Notification.requestPermission();
-  if (perm !== "granted") throw new Error("Notification permission was not granted. You will still get in-app and email reminders.");
+  if (perm !== "granted") throw new Error("Notification permission was not granted. You will still see reminders in the app.");
   const reg = (await navigator.serviceWorker.getRegistration()) ?? (await navigator.serviceWorker.register("/sw.js"));
   await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) });

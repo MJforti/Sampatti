@@ -104,6 +104,8 @@ select pg_temp.act_as(null);
 select pg_temp.ok((select premium_paise = 4500000 from insurance_policies), 'member update silently blocked by RLS');
 
 -- ---- Reminder engine -------------------------------------------------------
+select pg_temp.ok((select bool_and(not email) from notification_preferences), 'email notifications off by default');
+update notification_preferences set email = true; -- exercise the delivery pipeline
 select pg_temp.ok(generate_reminders(app_today()) = 2, 'first run fires reminders for premium (7d) and overdue EMI');
 select pg_temp.ok(generate_reminders(app_today()) = 0, 'second run same day is idempotent');
 select pg_temp.ok((select count(*) = 3 from notifications), 'admin gets 2, member gets only permitted insurance reminder');
@@ -176,3 +178,17 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 do $$ begin perform bootstrap_admin('6048'); raise exception 'should fail'; exception when others then
   if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - PIN cannot be re-bootstrapped'; end $$;
 select pg_temp.act_as(null);
+
+-- Self sign-up (no email)
+set role anon;
+select sign_up('New.Person@Example.com', 'longenough1', 'New Person');
+reset role;
+select pg_temp.ok((select role = 'read_only' and not exists (select 1 from entity_permissions ep where ep.user_id = up.id)
+  from user_profiles up where email = 'new.person@example.com'), 'sign-up creates a no-access read-only account');
+select pg_temp.ok((select encrypted_password = extensions.crypt('longenough1', encrypted_password) from auth.users where email = 'new.person@example.com'), 'password stored hashed');
+set role anon;
+do $$ begin perform sign_up('new.person@example.com', 'longenough1'); raise exception 'should fail'; exception when others then
+  if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - duplicate email rejected'; end $$;
+do $$ begin perform sign_up('x@example.com', 'short'); raise exception 'should fail'; exception when others then
+  if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - short password rejected'; end $$;
+reset role;

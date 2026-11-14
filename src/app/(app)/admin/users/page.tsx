@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { UserPlus } from "lucide-react";
 import { useApp, friendlyError } from "@/components/providers";
 import { Badge, Button, ErrorState, ListSkeleton, PageHeader, Sheet, cx } from "@/components/ui";
 import { supabase } from "@/lib/supabase/client";
@@ -19,20 +18,16 @@ export default function Users() {
     perms: unwrap(await sb.from("entity_permissions").select("*")) as P[],
   }), []);
   const [edit, setEdit] = useState<U | null>(null);
-  const [invite, setInvite] = useState(false);
-  const [inv, setInv] = useState({ email: "", full_name: "", role: "family_member" });
-  const [busy, setBusy] = useState(false);
+  const [newPw, setNewPw] = useState("");
 
   if (!isAdminMode) return <div><PageHeader title="Users" back="/more" /><p className="text-ink-3">Unlock Admin Mode to manage users.</p></div>;
   if (q.error) return <ErrorState error={q.error} retry={q.reload} />;
 
-  const sendInvite = async () => {
-    setBusy(true);
-    const res = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(inv) });
-    const j = await res.json().catch(() => ({}));
-    setBusy(false);
-    if (!res.ok) return toast(j.error ?? "Invite failed", "error");
-    toast("Invitation email sent"); setInvite(false); setInv({ email: "", full_name: "", role: "family_member" }); q.reload();
+  const resetPassword = async (u: U) => {
+    if (newPw.length < 8) return toast("Use at least 8 characters", "error");
+    const { error } = await sb.rpc("admin_set_password", { p_user: u.id, p_password: newPw });
+    if (error) return toast(friendlyError(error), "error");
+    toast("Password updated. Share it with them privately"); setNewPw("");
   };
   const setRole = async (u: U, patch: Partial<U>) => {
     const { error } = await sb.from("user_profiles").update(patch).eq("id", u.id);
@@ -51,7 +46,8 @@ export default function Users() {
 
   return (
     <div>
-      <PageHeader title="Users & access" back="/more" action={<Button size="sm" variant="admin" onClick={() => setInvite(true)}><UserPlus className="size-4" />Invite</Button>} />
+      <PageHeader title="Users & access" back="/more" />
+      <div className="card px-4 py-3 mb-3 text-sm text-ink-2">To add someone, ask them to open the app and tap <b className="font-medium text-ink">Create account</b>. They appear here; then grant access below.</div>
       {q.loading || !q.data ? <ListSkeleton /> : (
         <div className="card overflow-hidden">{q.data.users.map((u) => (
           <button key={u.id} onClick={() => setEdit(u)} className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b hairline last:border-0 active:bg-surface-2">
@@ -68,6 +64,11 @@ export default function Users() {
             <label className="block"><span className="text-sm font-medium text-ink-2">Role</span>
               <select className="field mt-1.5" value={edit.role} disabled={edit.id === me?.id} onChange={(e) => setRole(edit, { role: e.target.value })}>{ROLES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
             {edit.id !== me?.id && <Button variant="secondary" className="w-full" onClick={() => setRole(edit, { is_active: !edit.is_active })}>{edit.is_active ? "Disable account" : "Enable account"}</Button>}
+            <div className="card px-4 py-3">
+              <div className="text-sm font-medium mb-2">Reset password</div>
+              <div className="flex gap-2"><input className="field" type="text" autoComplete="off" placeholder="New password" value={newPw} onChange={(ev) => setNewPw(ev.target.value)} />
+                <Button variant="secondary" onClick={() => resetPassword(edit)}>Set</Button></div>
+            </div>
             {edit.role !== "admin" && entities.map((e) => {
               const p = perm(edit, e.id);
               return (
@@ -93,14 +94,6 @@ export default function Users() {
             })}
           </div>
         )}
-      </Sheet>
-      <Sheet open={invite} onClose={() => setInvite(false)} title="Invite a user" footer={<Button size="lg" className="w-full" loading={busy} onClick={sendInvite}>Send invitation</Button>}>
-        <div className="space-y-4">
-          <label className="block"><span className="text-sm font-medium text-ink-2">Email</span><input type="email" className="field mt-1.5" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} /></label>
-          <label className="block"><span className="text-sm font-medium text-ink-2">Name</span><input className="field mt-1.5" value={inv.full_name} onChange={(e) => setInv({ ...inv, full_name: e.target.value })} /></label>
-          <label className="block"><span className="text-sm font-medium text-ink-2">Role</span><select className="field mt-1.5" value={inv.role} onChange={(e) => setInv({ ...inv, role: e.target.value })}>{ROLES.filter(([k]) => k !== "admin").map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-          <p className="text-xs text-ink-3">After they accept, grant access to profiles from their user card.</p>
-        </div>
       </Sheet>
     </div>
   );

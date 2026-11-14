@@ -6,58 +6,62 @@ import { Button } from "@/components/ui";
 
 export default function Login() {
   const router = useRouter();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"password" | "link">("password");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ t: string; err?: boolean } | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  // Email links return here with the session (or an error) in the URL hash.
   useEffect(() => {
-    const sb = supabase();
-    const h = new URLSearchParams(location.hash.slice(1));
-    if (h.get("error_description")) setMsg({ t: h.get("error_description")!.replace(/\+/g, " ") + ". Request a new link.", err: true });
-    const go = () => { router.replace("/"); router.refresh(); };
-    sb.auth.getSession().then(({ data }) => data.session && go());
-    const { data: sub } = sb.auth.onAuthStateChange((evt) => { if (evt === "SIGNED_IN") go(); });
-    return () => sub.subscription.unsubscribe();
+    supabase().auth.getSession().then(({ data }) => data.session && router.replace("/"));
   }, [router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true); setMsg(null);
     const sb = supabase();
-    if (mode === "password") {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) setMsg({ t: error.message, err: true });
-      else { router.replace("/"); router.refresh(); }
-    } else {
-      const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/login` } });
-      setMsg(error ? { t: error.message, err: true } : { t: "Check your email and open the link on any device." });
+    if (mode === "signup") {
+      const { error } = await sb.rpc("sign_up", { p_email: email, p_password: password, p_full_name: name || null });
+      if (error) { setMsg(error.message); setBusy(false); return; }
     }
-    setBusy(false);
+    const { error } = await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (error) { setMsg(error.message === "Invalid login credentials" ? "Email or password is incorrect" : error.message); setBusy(false); return; }
+    router.replace("/"); router.refresh();
   };
 
+  const signup = mode === "signup";
   return (
     <main className="min-h-dvh flex flex-col justify-center px-6 max-w-sm mx-auto safe-top safe-bottom">
       <div className="mb-10">
         <h1 className="text-3xl font-medium tracking-tight">Sampatti</h1>
         <p className="mt-1 text-ink-3">What the family owes, when, and from which account</p>
       </div>
+      <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-surface-2 mb-5" role="tablist">
+        {(["signin", "signup"] as const).map((m) => (
+          <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { setMode(m); setMsg(null); }}
+            className={`h-10 rounded-xl text-sm font-medium transition-colors ${mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-3"}`}>
+            {m === "signin" ? "Sign in" : "Create account"}
+          </button>
+        ))}
+      </div>
       <form onSubmit={submit} className="space-y-3">
+        {signup && (
+          <label className="block"><span className="text-sm font-medium text-ink-2">Your name</span>
+            <input className="field mt-1.5" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} /></label>
+        )}
         <label className="block"><span className="text-sm font-medium text-ink-2">Email</span>
           <input className="field mt-1.5" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-        {mode === "password" && (
-          <label className="block"><span className="text-sm font-medium text-ink-2">Password</span>
-            <input className="field mt-1.5" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
-        )}
-        {msg && <p className={`text-sm ${msg.err ? "text-danger" : "text-ok"}`} role="status">{msg.t}</p>}
-        <Button type="submit" size="lg" className="w-full" loading={busy}>{mode === "password" ? "Sign in" : "Email me a sign-in link"}</Button>
-        <button type="button" onClick={() => setMode(mode === "password" ? "link" : "password")} className="w-full h-11 text-sm text-accent font-medium">
-          {mode === "password" ? "Sign in with an email link instead" : "Use password instead"}
-        </button>
+        <label className="block"><span className="text-sm font-medium text-ink-2">Password</span>
+          <input className="field mt-1.5" type="password" autoComplete={signup ? "new-password" : "current-password"} required minLength={signup ? 8 : undefined}
+            value={password} onChange={(e) => setPassword(e.target.value)} />
+          {signup && <span className="block mt-1 text-xs text-ink-3">At least 8 characters</span>}</label>
+        {msg && <p className="text-sm text-danger" role="alert">{msg}</p>}
+        <Button type="submit" size="lg" className="w-full" loading={busy}>{signup ? "Create account" : "Sign in"}</Button>
       </form>
-      <p className="mt-10 text-xs text-ink-3 text-center">Accounts are created by the family administrator.</p>
+      <p className="mt-10 text-xs text-ink-3 text-center">
+        {signup ? "New accounts can’t see anything until the administrator gives access" : "Forgot your password? Ask the administrator to reset it"}
+      </p>
     </main>
   );
 }

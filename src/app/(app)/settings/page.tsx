@@ -59,7 +59,7 @@ export default function Settings() {
       <SectionTitle>Notifications</SectionTitle>
       {prefs && (
         <div className="card px-4 py-2">
-          {(["in_app", "email", "push"] as const).map((k) => (
+          {(["in_app", "push"] as const).map((k) => (
             <label key={k} className="flex items-center justify-between py-3 border-b hairline last:border-0">
               <span>{{ in_app: "In-app", email: "Email", push: "Push on this phone" }[k]}</span>
               <input type="checkbox" className="size-6 accent-[var(--accent)]" checked={prefs[k]} disabled={k === "in_app"} onChange={(e) => savePrefs({ ...prefs, [k]: e.target.checked })} />
@@ -68,9 +68,9 @@ export default function Settings() {
         </div>
       )}
       <div className="card px-4 py-3 mt-2 text-sm">
-        {push === "unsupported" && <p className="text-ink-3">Push isn’t supported in this browser. On iPhone, add Sampatti to the Home Screen first (Share → Add to Home Screen). Email and in-app reminders still work.</p>}
-        {push === "not-configured" && <p className="text-ink-3">Push is not configured on the server yet (VAPID key missing). Email and in-app reminders still work.</p>}
-        {push === "denied" && <p className="text-ink-3">Notifications are blocked for this site in your browser settings. Email and in-app reminders still work.</p>}
+        {push === "unsupported" && <p className="text-ink-3">Push isn’t supported in this browser. On iPhone, add Sampatti to the Home Screen first (Share → Add to Home Screen). In-app reminders still work.</p>}
+        {push === "not-configured" && <p className="text-ink-3">Push is not configured on the server yet. In-app reminders still work.</p>}
+        {push === "denied" && <p className="text-ink-3">Notifications are blocked for this site in your browser settings. In-app reminders still work.</p>}
         {push === "default" && <Button className="w-full" onClick={async () => { try { await enablePush(user!.id); setPush("subscribed"); toast("Push enabled on this device"); } catch (e) { toast(friendlyError(e), "error"); } }}>Enable push on this device</Button>}
         {push === "subscribed" && <div className="flex items-center justify-between"><span className="text-ok font-medium">Push active on this device</span><Button size="sm" variant="secondary" onClick={async () => { await disablePush(); setPush("default"); }}>Turn off</Button></div>}
       </div>
