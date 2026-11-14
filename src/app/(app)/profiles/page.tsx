@@ -89,7 +89,7 @@ export default function Profiles() {
                       {s.overdue > 0 && <Badge tone="danger">{s.overdue} overdue</Badge>}</div>
                   </div>
                   <div className="text-right">
-                    <div className="num text-[15px] font-medium">{s.amount ? formatINR(s.amount) : "—"}</div>
+                    <div className="num text-[15px] font-medium">{s.amount ? formatINR(s.amount) : "Nothing due"}</div>
                     <div className="text-[12px] text-ink-3">{s.count} due in 30 days</div>
                   </div>
                   <ChevronRight className="size-4 text-ink-3" />

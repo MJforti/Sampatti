@@ -16,7 +16,7 @@ test("format INR with Indian grouping", () => {
   assert.equal(formatINR(4500000), "₹45,000");
   assert.equal(formatINR(123456789), "₹12,34,567.89");
   assert.equal(formatINR(-50), "-₹0.50");
-  assert.equal(formatINR(null), "—");
+  assert.equal(formatINR(null), "Not set");
   assert.equal(paiseToInput(120005), "1200.05");
   assert.equal(formatINRCompact(1234567800), "₹1.23 Cr");
 });

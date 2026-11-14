@@ -53,7 +53,7 @@ export default function TxPage({ params }: { params: Promise<{ id: string }> }) 
     setBusy(true);
     try {
       let receiptId: string | null = null;
-      if (receipt) receiptId = (await uploadDocument(receipt, { entity_id: ev.entity_id, category: "receipt", record_type: "scheduled_transactions", record_id: ev.id, title: `Receipt — ${ev.title}` })).id;
+      if (receipt) receiptId = (await uploadDocument(receipt, { entity_id: ev.entity_id, category: "receipt", record_type: "scheduled_transactions", record_id: ev.id, title: `Receipt: ${ev.title}` })).id;
       const { data, error } = await supabase().rpc("resolve_transaction", { p_id: ev.id, p_status: status, p_receipt: receiptId, ...extra });
       if (error) throw error;
       toast(status === "paid" ? "Marked as paid" : status === "renewed" ? "Marked as renewed" : status === "cancelled" ? "Cancelled" : "Updated");
@@ -77,7 +77,7 @@ export default function TxPage({ params }: { params: Promise<{ id: string }> }) 
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm text-ink-3">{isInflow(ev.category) ? "Expected" : "Amount"}</div>
-            <div className="num text-3xl font-semibold tracking-tight">{ev.amount_paise != null ? formatINR(ev.amount_paise) : "—"}</div>
+            <div className="num text-3xl font-semibold tracking-tight">{ev.amount_paise != null ? formatINR(ev.amount_paise) : "No amount"}</div>
           </div>
           <StatusBadge status={ev.status} />
         </div>
@@ -90,13 +90,13 @@ export default function TxPage({ params }: { params: Promise<{ id: string }> }) 
 
       {ev.status === "awaiting_confirmation" && (
         <div className="card mt-3 px-4 py-3 bg-danger-soft border-danger/20 text-sm text-danger">
-          This auto-debit date has passed. Check your bank statement and confirm whether it went through — it is never assumed.
+          This auto-debit date has passed. Check your bank statement and confirm whether it went through. It is never assumed.
         </div>
       )}
 
       <div className="card mt-3 px-4">
         <Row label="Responsible" value={ev.entity_name} />
-        <Row label="Bank account" value={ev.bank_name ? `${ev.bank_name}${ev.account_last4 ? " ••" + ev.account_last4 : ""}` : "—"} />
+        <Row label="Bank account" value={ev.bank_name ? `${ev.bank_name}${ev.account_last4 ? " ••" + ev.account_last4 : ""}` : "Not set"} />
         <Row label="Payment mode" value={ev.auto_debit ? "Auto-debit" : "Manual"} />
         <Row label="Category" value={CATEGORY_LABEL[ev.category] ?? ev.category} />
         {ev.instructions && <Row label="Instructions" value={<span className="whitespace-pre-line">{ev.instructions}</span>} />}

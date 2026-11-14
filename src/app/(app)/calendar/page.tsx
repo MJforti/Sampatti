@@ -122,7 +122,7 @@ function Calendar() {
           {Array.from({ length: 7 }).map((_, i) => {
             const d = addDays(weekStart, i);
             return <div key={d}><div className={cx("text-sm font-semibold mb-1.5 px-1", d === today && "text-accent")}>{new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(d + "T00:00:00Z"))}</div>
-              {(byDay[d] ?? []).length ? <EventList events={byDay[d]} /> : <div className="text-sm text-ink-3 px-1 pb-1">—</div>}</div>;
+              {(byDay[d] ?? []).length ? <EventList events={byDay[d]} /> : <div className="text-sm text-ink-3 px-1 pb-1">Nothing scheduled</div>}</div>;
           })}
         </div>
       ))}

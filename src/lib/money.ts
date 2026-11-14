@@ -23,7 +23,7 @@ function groupIndian(digits: string): string {
 
 /** 4500000 -> "₹45,000"; 123456789 -> "₹12,34,567.89" */
 export function formatINR(paise: number | string | null | undefined, opts: { showPaise?: boolean } = {}): string {
-  if (paise === null || paise === undefined || paise === "") return "—";
+  if (paise === null || paise === undefined || paise === "") return "Not set";
   const n = BigInt(typeof paise === "string" ? paise : Math.trunc(paise));
   const neg = n < 0n;
   const abs = neg ? -n : n;
@@ -35,7 +35,7 @@ export function formatINR(paise: number | string | null | undefined, opts: { sho
 
 /** Compact: ₹4.5 L, ₹1.2 Cr — display only. */
 export function formatINRCompact(paise: number | null | undefined): string {
-  if (paise === null || paise === undefined) return "—";
+  if (paise === null || paise === undefined) return "Not set";
   const rupees = Math.trunc(paise / 100);
   const abs = Math.abs(rupees);
   const sign = rupees < 0 ? "-" : "";

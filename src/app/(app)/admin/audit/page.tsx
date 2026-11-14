@@ -51,7 +51,7 @@ function show(key: string, v: unknown) {
 
 function describe(l: Log, entityName: (id: string) => string): { text: string; details: string[]; tone: string } {
   if (SPECIAL[l.action]) {
-    const extra = l.action === "entity.deleted" ? ` “${l.old_data?.name}”` : l.action.startsWith("family.admin") ? ` — ${l.new_data?.user} for “${l.new_data?.name}”` : l.action === "family.joined" ? ` “${l.new_data?.name}”${l.new_data?.left ? ` (left “${l.new_data.left}”)` : ""}` : "";
+    const extra = l.action === "entity.deleted" ? ` “${l.old_data?.name}”` : l.action.startsWith("family.admin") ? `: ${l.new_data?.user} for “${l.new_data?.name}”` : l.action === "family.joined" ? ` “${l.new_data?.name}”${l.new_data?.left ? ` (left “${l.new_data.left}”)` : ""}` : "";
     return { text: SPECIAL[l.action] + extra, details: [], tone: l.action.includes("fail") || l.action.includes("denied") ? "danger" : "neutral" };
   }
   const rec = l.new_data ?? l.old_data;
@@ -62,7 +62,7 @@ function describe(l: Log, entityName: (id: string) => string): { text: string; d
   const thing = THING[l.table_name ?? ""] ?? "record";
   const name = recName(l.table_name, rec);
   const owner = rec?.entity_id && l.table_name !== "family_entities" ? entityName(rec.entity_id) : "";
-  const label = `${thing}${name ? ` “${name}”` : ""}${owner && owner !== "—" ? ` for ${owner}` : ""}`;
+  const label = `${thing}${name ? ` “${name}”` : ""}${owner && owner !== "Unknown" ? ` for ${owner}` : ""}`;
   const a = /^[aeiou]/.test(thing) ? "an" : "a";
   if (l.action === "insert") return { text: `added ${a} ${label}`, details: [], tone: "ok" };
   if (l.action === "delete") return { text: `deleted ${a} ${label}`, details: [], tone: "danger" };
@@ -134,7 +134,7 @@ export default function Audit() {
             <div className="flex justify-between gap-2"><span className="text-[15px] truncate">{r.notifications?.title}</span>
               <Badge tone={r.status === "sent" ? "ok" : r.status === "failed" ? "danger" : "neutral"}>{{ sent: "Delivered", failed: "Failed", skipped: "Skipped", pending: "Waiting", sending: "Sending" }[r.status as string] ?? r.status}</Badge></div>
             <div className="text-[13px] text-ink-3">{r.channel === "push" ? "Phone notification" : r.channel === "email" ? "Email" : r.channel} to {q.data!.who(r.notifications?.user_id)} · {when(r.created_at)}</div>
-            {r.status === "failed" && r.last_error && <div className="text-[12px] text-danger mt-0.5">{/subscription/.test(r.last_error) ? "Their phone didn’t accept it — they may need to turn notifications on again" : /VAPID/.test(r.last_error) ? "Phone notifications aren’t set up" : r.last_error}</div>}
+            {r.status === "failed" && r.last_error && <div className="text-[12px] text-danger mt-0.5">{/subscription/.test(r.last_error) ? "Their phone didn’t accept it. They may need to turn notifications on again" : /VAPID/.test(r.last_error) ? "Phone notifications aren’t set up" : r.last_error}</div>}
           </div>
         ))}</div>
       )}

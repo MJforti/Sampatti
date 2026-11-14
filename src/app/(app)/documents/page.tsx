@@ -55,7 +55,7 @@ export default function Documents() {
             <select className="field mt-1.5" value={meta.entity_id} onChange={(e) => setMeta({ ...meta, entity_id: e.target.value })}><option value="">Select…</option>{entities.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
           <label className="block"><span className="text-sm font-medium text-ink-2">Category</span>
             <select className="field mt-1.5" value={meta.category} onChange={(e) => setMeta({ ...meta, category: e.target.value })}>{DOC_CATEGORIES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
-          <label className="block"><span className="text-sm font-medium text-ink-2">Expiry date (optional — sends reminders)</span><input type="date" className="field mt-1.5" value={meta.expiry_date} onChange={(e) => setMeta({ ...meta, expiry_date: e.target.value })} /></label>
+          <label className="block"><span className="text-sm font-medium text-ink-2">Expiry date (optional, sends reminders)</span><input type="date" className="field mt-1.5" value={meta.expiry_date} onChange={(e) => setMeta({ ...meta, expiry_date: e.target.value })} /></label>
         </div>
       </Sheet>
     </div>

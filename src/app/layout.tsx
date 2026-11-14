@@ -5,7 +5,7 @@ import { RegisterSW } from "@/components/pwa";
 import { THEME_BOOT } from "@/components/theme";
 
 export const metadata: Metadata = {
-  title: "Sampatti — Family finances",
+  title: "Sampatti",
   description: "Family financial reminders, deadlines and records",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "Sampatti", statusBarStyle: "default" },

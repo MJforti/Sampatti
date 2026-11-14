@@ -57,28 +57,11 @@ export default function Users() {
             {!u.is_active && <Badge tone="muted">Disabled</Badge>}
           </button>))}</div>
       )}
-      <p className="mt-3 px-1 text-xs text-ink-3">The ultra admin sees everything. Family admins manage their own family only. Other users see only the profiles and sections granted below — enforced by the database, not just the screen.</p>
+      <p className="mt-3 px-1 text-xs text-ink-3">The ultra admin sees everything. Family admins manage their own family only. Other users see only the profiles and sections granted below. This is enforced by the database, not just the screen.</p>
 
       <Sheet open={!!edit} onClose={() => setEdit(null)} title={edit?.full_name || edit?.email || ""}>
         {edit && (
           <div className="space-y-4">
-            {edit.role !== "admin" && (() => {
-              const m = q.data?.members.find((x) => x.user_id === edit.id);
-              return (
-                <label className="block"><span className="text-sm font-medium text-ink-2">Family admin of</span>
-                  <select className="field mt-1.5" value={m?.is_admin ? m.family_id : ""} onChange={async (ev) => {
-                    const fid = ev.target.value;
-                    const r = fid ? await sb.rpc("set_family_admin", { p_user: edit.id, p_family: fid, p_admin: true })
-                      : m ? await sb.rpc("set_family_admin", { p_user: edit.id, p_family: m.family_id, p_admin: false }) : { error: null };
-                    if (r.error) return toast(friendlyError(r.error), "error");
-                    toast(fid ? "Family admin set. They’ll choose their own PIN" : "Family admin removed"); q.reload(); reloadRefs();
-                  }}>
-                    <option value="">Not a family admin{m ? ` (member of ${families.find((f) => f.id === m.family_id)?.name ?? "a family"})` : ""}</option>
-                    {families.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-                  </select>
-                  <span className="block mt-1 text-xs text-ink-3">Can add and edit records for that family only. Choosing a family moves them into it</span></label>
-              );
-            })()}
             <label className="block"><span className="text-sm font-medium text-ink-2">This person is</span>
               <select className="field mt-1.5" value={(edit as U & { linked_entity_id?: string | null }).linked_entity_id ?? ""} onChange={async (ev) => {
                 const { error } = await sb.rpc("link_user_profile", { p_user: edit.id, p_entity: ev.target.value || null });
@@ -88,8 +71,42 @@ export default function Users() {
                 <option value="">Not linked to a profile</option>{entities.map((x) => <option key={x.id} value={x.id}>{x.emoji ? x.emoji + " " : ""}{x.name}</option>)}
               </select>
               <span className="block mt-1 text-xs text-ink-3">Lets them choose their own emoji</span></label>
-            <label className="block"><span className="text-sm font-medium text-ink-2">Role</span>
-              <select className="field mt-1.5" value={edit.role} disabled={edit.id === me?.id} onChange={(e) => setRole(edit, { role: e.target.value })}>{ROLES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+            {(() => {
+              const m = q.data?.members.find((x) => x.user_id === edit.id);
+              const famAdmin = edit.role !== "admin" && !!m?.is_admin;
+              const roleValue = famAdmin ? "family_admin" : edit.role;
+              const makeFamilyAdmin = async (fid: string) => {
+                if (!fid) return;
+                if (edit.role === "admin") { const r = await sb.from("user_profiles").update({ role: "family_member" }).eq("id", edit.id); if (r.error) return toast(friendlyError(r.error), "error"); }
+                const { error } = await sb.rpc("set_family_admin", { p_user: edit.id, p_family: fid, p_admin: true });
+                if (error) return toast(friendlyError(error), "error");
+                toast(`Now admin of ${families.find((f) => f.id === fid)?.name}. They’ll choose their own PIN`);
+                setEdit({ ...edit, role: edit.role === "admin" ? "family_member" : edit.role }); q.reload(); reloadRefs();
+              };
+              return (
+                <>
+                  <label className="block"><span className="text-sm font-medium text-ink-2">Role</span>
+                    <select className="field mt-1.5" value={roleValue} disabled={edit.id === me?.id} onChange={async (e) => {
+                      const v = e.target.value;
+                      if (v === "family_admin") return makeFamilyAdmin(m?.family_id ?? families[0]?.id ?? "");
+                      if (famAdmin) { const r = await sb.rpc("set_family_admin", { p_user: edit.id, p_family: m!.family_id, p_admin: false }); if (r.error) return toast(friendlyError(r.error), "error"); }
+                      setRole(edit, { role: v });
+                    }}>
+                      <option value="admin">Ultra admin (everything)</option>
+                      <option value="family_admin" disabled={!families.length}>Family admin (one family)</option>
+                      {ROLES.filter(([k]) => k !== "admin").map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                    </select>
+                    {edit.id === me?.id && <span className="block mt-1 text-xs text-ink-3">You can’t change your own role</span>}</label>
+                  {famAdmin && (
+                    <label className="block"><span className="text-sm font-medium text-ink-2">Admin of which family</span>
+                      <select className="field mt-1.5" value={m!.family_id} onChange={(e) => makeFamilyAdmin(e.target.value)}>
+                        {families.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                      </select>
+                      <span className="block mt-1 text-xs text-ink-3">They can add and edit records for this family only</span></label>
+                  )}
+                </>
+              );
+            })()}
             {edit.id !== me?.id && <Button variant="secondary" className="w-full" onClick={() => setRole(edit, { is_active: !edit.is_active })}>{edit.is_active ? "Disable account" : "Enable account"}</Button>}
             <div className="card px-4 py-3">
               <div className="text-sm font-medium mb-2">Reset password</div>

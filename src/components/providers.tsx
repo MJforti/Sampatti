@@ -164,10 +164,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     user, profile, loading, entities, families, banks, vehicles, settings, tz: settings?.timezone ?? DEFAULT_TZ, reloadRefs,
-    entityName: (id) => entities.find((e) => e.id === id)?.name ?? "—",
+    entityName: (id) => entities.find((e) => e.id === id)?.name ?? "Unknown",
     bankLabel: (id) => {
       const b = banks.find((x) => x.id === id);
-      return b ? `${b.nickname || b.bank_name}${b.account_last4 ? " ••" + b.account_last4 : ""}` : "—";
+      return b ? `${b.nickname || b.bank_name}${b.account_last4 ? " ••" + b.account_last4 : ""}` : "Not set";
     },
     selected: entities.some((e) => e.id === selected) ? selected : null, setSelected,
     admin, isAdminMode,

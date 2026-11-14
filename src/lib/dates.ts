@@ -18,7 +18,7 @@ export function addDays(iso: string, n: number): string {
 }
 
 export function formatDate(iso: string | null | undefined, style: "long" | "short" = "long"): string {
-  if (!iso) return "—";
+  if (!iso) return "Not set";
   const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
   return new Intl.DateTimeFormat("en-IN", {

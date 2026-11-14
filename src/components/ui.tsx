@@ -154,7 +154,7 @@ export function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-3 border-b hairline last:border-0">
       <div className="text-sm text-ink-3 shrink-0">{label}</div>
-      <div className="text-[15px] text-right break-words min-w-0">{value ?? "—"}</div>
+      <div className="text-[15px] text-right break-words min-w-0">{value ?? "Not set"}</div>
     </div>
   );
 }

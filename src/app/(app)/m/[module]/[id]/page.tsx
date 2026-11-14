@@ -66,7 +66,7 @@ export default function Detail({ params }: { params: Promise<{ module: string; i
     else ({ error } = await sb.from(mod.table).update({ archived_at: confirm === "restore" ? null : new Date().toISOString() }).eq("id", id));
     setBusy(false);
     if (error) return toast(friendlyError(error), "error");
-    toast(confirm === "delete" ? "Deleted" : confirm === "restore" ? "Restored" : "Archived — reminders stopped");
+    toast(confirm === "delete" ? "Deleted" : confirm === "restore" ? "Restored" : "Archived. Reminders stopped");
     setConfirm(null);
     reloadRefs();
     if (confirm === "delete") router.replace(`/m/${module}`); else q.reload();
@@ -89,7 +89,7 @@ export default function Detail({ params }: { params: Promise<{ module: string; i
       case "entity": return entityName(v);
       case "entities": return (v as string[]).map(entityName).join(", ");
       case "bank": return bankLabel(v);
-      case "vehicle": return vehicles.find((x) => x.id === v)?.registration_number ?? "—";
+      case "vehicle": return vehicles.find((x) => x.id === v)?.registration_number ?? "Not set";
       case "frequency": return label(FREQUENCIES, v);
       case "select": return label(f.options ?? [], v);
       case "textarea": return <span className="whitespace-pre-line">{v}</span>;
@@ -121,7 +121,7 @@ export default function Detail({ params }: { params: Promise<{ module: string; i
           <div><div className="text-sm text-ink-3">Outstanding</div><div className="num text-xl font-semibold">{formatINR(r.outstanding_paise)}</div></div>
           <div><div className="text-sm text-ink-3">EMI</div><div className="num text-xl font-semibold">{formatINR(r.emi_paise)}</div></div>
           <div><div className="text-sm text-ink-3">Est. remaining</div><div className="font-medium">{schedule.feasible ? `${schedule.rows.length} months` : "EMI below interest"}</div></div>
-          <div><div className="text-sm text-ink-3">Est. closure</div><div className="font-medium">{schedule.feasible ? formatDate(schedule.rows.at(-1)!.date, "short") : "—"}</div></div>
+          <div><div className="text-sm text-ink-3">Est. closure</div><div className="font-medium">{schedule.feasible ? formatDate(schedule.rows.at(-1)!.date, "short") : "Not available"}</div></div>
           <div className="col-span-2 text-sm text-ink-3">Annual EMI outflow <span className="num text-ink font-medium">{formatINR(r.emi_paise * 12)}</span> · est. future interest <span className="num text-ink font-medium">{formatINR(schedule.totalInterest)}</span></div>
           <button className="col-span-2 text-left text-sm text-accent font-medium" onClick={() => setShowSchedule(!showSchedule)}>{showSchedule ? "Hide" : "Show"} estimated repayment schedule</button>
           {showSchedule && <div className="col-span-2 max-h-80 overflow-auto -mx-2 text-[13px]">
@@ -170,7 +170,7 @@ export default function Detail({ params }: { params: Promise<{ module: string; i
       <Confirm open={confirm !== null} onClose={() => setConfirm(null)} loading={busy} danger={confirm === "delete"}
         title={confirm === "delete" ? "Delete permanently?" : confirm === "restore" ? "Restore this record?" : "Archive this record?"}
         confirmLabel={confirm === "delete" ? "Delete" : confirm === "restore" ? "Restore" : "Archive"}
-        message={confirm === "delete" ? "This removes the record and its scheduled reminders. Payment history linked to it is also removed. This cannot be undone — archiving is usually better."
+        message={confirm === "delete" ? "This removes the record and its scheduled reminders. Payment history linked to it is also removed. This cannot be undone. Archiving is usually better."
           : confirm === "restore" ? "Reminders will resume for its dates." : "Open reminders for this record will stop. You can restore it later."}
         onConfirm={doAction} />
     </div>
