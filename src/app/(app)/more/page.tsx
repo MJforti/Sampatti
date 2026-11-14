@@ -3,6 +3,7 @@ import Link from "next/link";
 import { TrendingUp, ShieldCheck, Landmark, Car, Building2, FileText, Receipt, BarChart3, Settings, Repeat, ChevronRight, Wallet, UserCog, ScrollText, Search } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { AdminToggle } from "@/components/shell";
+import { LogoutButton } from "@/components/logout";
 import { PageHeader, SectionTitle } from "@/components/ui";
 
 const ITEMS = [
@@ -46,6 +47,7 @@ export default function More() {
           <AdminToggle />
         </>
       )}
+      <div className="mt-6"><LogoutButton /></div>
     </div>
   );
 }

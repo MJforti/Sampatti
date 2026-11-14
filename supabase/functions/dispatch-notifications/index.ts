@@ -29,9 +29,18 @@ const supabase = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KE
   auth: { persistSession: false },
 });
 
-const pushReady = !!(env("VAPID_PUBLIC_KEY") && env("VAPID_PRIVATE_KEY"));
-if (pushReady) {
-  webpush.setVapidDetails(env("VAPID_SUBJECT") || "mailto:admin@example.com", env("VAPID_PUBLIC_KEY"), env("VAPID_PRIVATE_KEY"));
+// VAPID keys: function secrets if set, otherwise from Vault via get_push_config().
+let pushReady: boolean | null = null;
+async function ensurePush() {
+  if (pushReady !== null) return pushReady;
+  let pub = env("VAPID_PUBLIC_KEY"), priv = env("VAPID_PRIVATE_KEY"), subj = env("VAPID_SUBJECT");
+  if (!pub || !priv) {
+    const { data } = await supabase.rpc("get_push_config");
+    pub = data?.vapid_public ?? ""; priv = data?.vapid_private ?? ""; subj = subj || data?.vapid_subject || "";
+  }
+  pushReady = !!(pub && priv);
+  if (pushReady) webpush.setVapidDetails(subj || "mailto:admin@example.com", pub, priv);
+  return pushReady;
 }
 
 function escapeHtml(s: string) {
@@ -67,7 +76,7 @@ async function sendEmail(row: Claimed) {
 }
 
 async function sendPush(row: Claimed) {
-  if (!pushReady) throw new Error("VAPID keys not configured");
+  if (!(await ensurePush())) throw new Error("VAPID keys not configured");
   const { data: subs, error } = await supabase.from("push_subscriptions").select("*").eq("user_id", row.user_id);
   if (error) throw error;
   if (!subs?.length) return "skipped";
@@ -105,13 +114,6 @@ Deno.serve(async (req) => {
     } catch (e) {
       status = "failed";
       lastError = String((e as Error).message ?? e).slice(0, 500);
-    }
-    // Push failed permanently -> make sure an email fallback exists.
-    if (row.channel === "push" && status === "failed" && row.attempts >= 3) {
-      await supabase.from("notification_delivery_logs").upsert(
-        { notification_id: row.notification_id, channel: "email", status: "pending" },
-        { onConflict: "notification_id,channel", ignoreDuplicates: true },
-      );
     }
     await supabase.from("notification_delivery_logs").update({
       status, last_error: lastError, sent_at: status === "sent" ? new Date().toISOString() : null,

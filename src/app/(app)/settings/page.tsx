@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 const MUTABLE = [["insurance", "Insurance"], ["investments", "Investments & SIPs"], ["loans", "Loans & EMIs"], ["vehicles", "Vehicles"], ["tax", "Tax & compliance"], ["documents", "Document expiry"], ["obligations", "Other payments"]];
 
 export default function Settings() {
-  const { user, profile, toast, isAdminMode, settings, reloadRefs } = useApp();
+  const { user, profile, toast, isAdminMode, settings, reloadRefs, refreshUnread } = useApp();
   const router = useRouter();
   const sb = supabase();
   const [prefs, setPrefs] = useState<{ in_app: boolean; email: boolean; push: boolean; muted_categories: string[] } | null>(null);
@@ -74,6 +74,16 @@ export default function Settings() {
         {push === "default" && <Button className="w-full" onClick={async () => { try { await enablePush(user!.id); setPush("subscribed"); toast("Push enabled on this device"); } catch (e) { toast(friendlyError(e), "error"); } }}>Enable push on this device</Button>}
         {push === "subscribed" && <div className="flex items-center justify-between"><span className="text-ok font-medium">Push active on this device</span><Button size="sm" variant="secondary" onClick={async () => { await disablePush(); setPush("default"); }}>Turn off</Button></div>}
       </div>
+      <Button variant="secondary" className="w-full mt-2" onClick={async () => {
+        const { data, error } = await sb.rpc("send_test_notification");
+        if (error) return toast(friendlyError(error), "error");
+        refreshUnread();
+        if (!data?.push_queued && "Notification" in window && Notification.permission === "granted") {
+          const reg = await navigator.serviceWorker?.getRegistration();
+          reg?.showNotification("Test alert", { body: "Reminders are working on this device.", icon: "/icons/icon-192.png", data: { url: "/reminders" } });
+        }
+        toast(data?.push_queued ? "Test alert sent. Check Reminders and your phone’s notifications" : "Test alert sent. Check Reminders");
+      }}>Send a test alert</Button>
       {prefs && (
         <>
           <SectionTitle>Remind me about</SectionTitle>

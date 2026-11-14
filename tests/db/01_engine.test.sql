@@ -192,3 +192,12 @@ do $$ begin perform sign_up('new.person@example.com', 'longenough1'); raise exce
 do $$ begin perform sign_up('x@example.com', 'short'); raise exception 'should fail'; exception when others then
   if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - short password rejected'; end $$;
 reset role;
+
+-- Test notification
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select send_test_notification();
+select pg_temp.ok((select count(*) = 1 from notifications where kind = 'test' and user_id = auth.uid()), 'test notification lands in own inbox');
+select send_test_notification(), send_test_notification(), send_test_notification(), send_test_notification();
+do $$ begin perform send_test_notification(); raise exception 'should fail'; exception when others then
+  if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - test alerts rate-limited'; end $$;
+select pg_temp.act_as(null);

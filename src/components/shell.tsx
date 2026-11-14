@@ -6,6 +6,7 @@ import { Home, BellRing, CalendarDays, Users, LayoutGrid, Lock, ShieldCheck, Del
 import { useApp, type AdminStatus } from "./providers";
 import { Button, Sheet, cx } from "./ui";
 import { supabase } from "@/lib/supabase/client";
+import { LogoutButton } from "./logout";
 
 const TABS = [
   { href: "/", label: "Home", icon: Home },
@@ -43,7 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="mt-auto"><AdminToggle /></div>
+        <div className="mt-auto space-y-1"><AdminToggle /><LogoutButton className="w-full text-ink-2" /></div>
       </aside>
 
       {isAdminMode && (

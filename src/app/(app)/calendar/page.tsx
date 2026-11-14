@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { EventList, type CalEvent } from "@/components/obligations";
-import { Chip, ErrorState, ListSkeleton, PageHeader, cx } from "@/components/ui";
+import { ErrorState, ListSkeleton, PageHeader, cx } from "@/components/ui";
 import { ProfileSelect } from "@/components/profile-select";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
@@ -60,17 +60,19 @@ function Calendar() {
   return (
     <div>
       <PageHeader title="Calendar" subtitle="Scheduled payments, renewals and deadlines" />
-      <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-surface-2 mb-3" role="tablist">
+      <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-surface-2 mb-2" role="tablist">
         {(["month", "week", "list"] as const).map((v) => (
           <button key={v} onClick={() => setView(v)} className={cx("h-9 rounded-xl text-sm font-medium capitalize", view === v ? "bg-surface shadow-sm text-ink" : "text-ink-3")}>{v}</button>
         ))}
       </div>
       <ProfileSelect />
-      <div className="-mx-4 px-4 flex gap-2 overflow-x-auto no-scrollbar py-2">
-        {GROUPS.map(([k, l]) => <Chip key={k} active={group === k} onClick={() => setGroup(k)}>{l}</Chip>)}
-      </div>
-      <div className="flex gap-2 pb-2">
-        {STATUS_FILTERS.map(([k, l]) => <Chip key={k} active={status === k} onClick={() => setStatus(k)}>{l}</Chip>)}
+      <div className="flex gap-2 py-2">
+        <select aria-label="Category" className="field !min-h-10 !py-2 flex-1" value={group} onChange={(e) => setGroup(e.target.value)}>
+          {GROUPS.map(([k, l]) => <option key={k} value={k}>{k === "all" ? "All categories" : l}</option>)}
+        </select>
+        <select aria-label="Status" className="field !min-h-10 !py-2 w-32" value={status} onChange={(e) => setStatus(e.target.value)}>
+          {STATUS_FILTERS.map(([k, l]) => <option key={k} value={k}>{k === "all" ? "Any status" : l}</option>)}
+        </select>
       </div>
 
       {view !== "list" && (
@@ -92,7 +94,7 @@ function Calendar() {
                 const inMonth = Number(d.slice(5, 7)) - 1 === m;
                 const overdue = items.some((e) => e.status === "overdue" || e.status === "awaiting_confirmation");
                 return (
-                  <button key={d} onClick={() => setDay(d)} className={cx("h-14 flex flex-col items-center pt-1.5 rounded-xl", day === d && "bg-accent-soft", !inMonth && "opacity-35")}
+                  <button key={d} onClick={() => setDay(d)} className={cx("h-12 flex flex-col items-center pt-1 rounded-xl transition-colors", day === d && "bg-accent-soft", !inMonth && "opacity-35")}
                     aria-label={`${formatDate(d)}, ${items.length} items`}>
                     <span className={cx("text-sm num size-7 grid place-items-center rounded-full", d === today && "bg-ink text-bg font-semibold", overdue && d !== today && "text-danger font-semibold")}>{Number(d.slice(8))}</span>
                     <span className="flex gap-0.5 mt-0.5">{items.slice(0, 3).map((e) => <span key={e.id} className="size-1.5 rounded-full" style={{ background: `var(--c-${categoryGroup(e.category)})` }} />)}</span>
@@ -105,8 +107,14 @@ function Calendar() {
       )}
       {view === "month" && (
         <div className="mt-4">
-          <div className="text-sm font-semibold mb-2 px-1">{formatDate(day)}</div>
-          {ev.loading ? <ListSkeleton rows={2} /> : <EventList events={byDay[day] ?? []} empty="Nothing scheduled on this day." />}
+          <div className="text-[15px] font-medium text-ink-2 mb-2 px-1">{formatDate(day)}</div>
+          {ev.loading ? <ListSkeleton rows={2} /> : (byDay[day] ?? []).length ? <EventList events={byDay[day]} /> : (
+            <>
+              <div className="text-sm text-ink-3 px-1 mb-4">Nothing on this day</div>
+              <div className="text-[15px] font-medium text-ink-2 mb-2 px-1">Coming up in {title}</div>
+              <EventList events={filtered.filter((e) => e.event_date >= (day > today ? day : today) && Number(e.event_date.slice(5, 7)) - 1 === m)} empty="Nothing else this month" />
+            </>
+          )}
         </div>
       )}
       {view === "week" && (ev.loading ? <ListSkeleton /> : (
