@@ -8,6 +8,7 @@ import { AdminToggle } from "@/components/shell";
 import { enablePush, disablePush, pushState, type PushState } from "@/components/pwa";
 import { supabase } from "@/lib/supabase/client";
 import { ThemePicker } from "@/components/theme";
+import { MemberAvatar, EmojiPicker } from "@/components/member-emoji";
 
 const MUTABLE = [["insurance", "Insurance"], ["investments", "Investments & SIPs"], ["loans", "Loans & EMIs"], ["vehicles", "Vehicles"], ["tax", "Tax & compliance"], ["documents", "Document expiry"], ["obligations", "Other payments"]];
 
@@ -56,6 +57,8 @@ export default function Settings() {
           <Button variant="secondary" onClick={async () => { await sb.auth.signOut(); router.replace("/login"); }}><LogOut className="size-4" />Sign out</Button>
         </div>
       </div>
+
+      <MyProfileEmoji />
 
       <SectionTitle>Appearance</SectionTitle>
       <ThemePicker />
@@ -172,5 +175,23 @@ function JoinFamily() {
           </ul>
         </div>} onConfirm={join} />
     </div>
+  );
+}
+
+function MyProfileEmoji() {
+  const { profile, entities } = useApp();
+  const [open, setOpen] = useState(false);
+  const me = entities.find((e) => e.id === profile?.linked_entity_id);
+  if (!me) return null;
+  return (
+    <>
+      <SectionTitle>Your profile</SectionTitle>
+      <div className="card px-4 py-3 flex items-center gap-3">
+        <MemberAvatar entity={me} onClick={() => setOpen(true)} />
+        <div className="flex-1 min-w-0"><div className="font-medium truncate">{me.name}</div><div className="text-[13px] text-ink-3">Your emoji marks your payments and records</div></div>
+        <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>{me.emoji ? "Change" : "Choose"}</Button>
+      </div>
+      <EmojiPicker entity={me} open={open} onClose={() => setOpen(false)} />
+    </>
   );
 }

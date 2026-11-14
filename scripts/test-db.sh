@@ -13,5 +13,5 @@ PSQL="psql -h /tmp -p $PORT -U postgres -v ON_ERROR_STOP=1 -q"
 $PSQL -c "create database t" >/dev/null
 $PSQL -d t -f "$ROOT/tests/db/supabase_stub.sql" >/dev/null
 for f in "$ROOT"/supabase/migrations/*.sql; do echo "migrate $(basename "$f")"; $PSQL -d t -f "$f" >/dev/null; done
-for f in "$ROOT"/tests/db/*.test.sql; do echo "test $(basename "$f")"; $PSQL -d t -o /dev/null -f "$f" 2>&1 | sed -n "s/.*NOTICE:  //p"; test "${PIPESTATUS[0]}" = 0; done
+for f in "$ROOT"/tests/db/*.test.sql; do echo "test $(basename "$f")"; $PSQL -d t -o /dev/null -f "$f" 2>&1 | sed -n -e "s/.*NOTICE:  //p" -e "/ERROR/p"; test "${PIPESTATUS[0]}" = 0; done
 echo "ALL DB TESTS PASSED"

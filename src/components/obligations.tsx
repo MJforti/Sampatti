@@ -5,6 +5,7 @@ import { daysBetween, formatDate, relativeDays, todayISO } from "@/lib/dates";
 import { isInflow, type TxnStatus } from "@/lib/status";
 import { StatusBadge, cx } from "./ui";
 import { useApp } from "./providers";
+import { MemberName } from "./member-emoji";
 
 export type CalEvent = {
   id: string; event_date: string; status: TxnStatus; amount_paise: number | null; entity_id: string; entity_name: string;
@@ -34,7 +35,7 @@ export function EventRow({ e }: { e: CalEvent; compact?: boolean }) {
       <div className="min-w-0 flex-1 px-3 py-3">
         <div className="text-[15px] font-medium truncate">{e.title}</div>
         <div className="text-[13px] text-ink-3 truncate">
-          {e.entity_name}{e.bank_name ? ` · ${e.bank_name}${e.account_last4 ? " ••" + e.account_last4 : ""}` : ""}
+          <MemberName id={e.entity_id} name={e.entity_name} />{e.bank_name ? ` · ${e.bank_name}${e.account_last4 ? " ••" + e.account_last4 : ""}` : ""}
         </div>
         {showBadge && <div className="mt-1"><StatusBadge status={e.status} /></div>}
       </div>

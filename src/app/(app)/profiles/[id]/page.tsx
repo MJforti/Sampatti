@@ -5,6 +5,7 @@ import { ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApp, friendlyError } from "@/components/providers";
 import { ProfileForm } from "@/components/profile-form";
+import { MemberAvatar, EmojiPicker, canChooseEmoji } from "@/components/member-emoji";
 import { EventList, type CalEvent } from "@/components/obligations";
 import { Button, ErrorState, ListSkeleton, PageHeader, Row, SectionTitle, Sheet } from "@/components/ui";
 import { MODULES, MODULE_LIST } from "@/lib/modules";
@@ -16,7 +17,8 @@ import { OPEN_STATUSES } from "@/lib/status";
 
 export default function ProfileDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { entities, isAdminMode, tz, setSelected, selected, toast, reloadRefs } = useApp();
+  const { entities, isAdminMode, tz, setSelected, selected, toast, reloadRefs, profile } = useApp();
+  const [picking, setPicking] = useState(false);
   const router = useRouter();
   const [removing, setRemoving] = useState(false);
   const [confirmName, setConfirmName] = useState("");
@@ -44,6 +46,17 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
     <div>
       <PageHeader title={e.name} back="/profiles" subtitle={e.entity_type.toUpperCase() === "HUF" ? "HUF" : e.entity_type[0].toUpperCase() + e.entity_type.slice(1)}
         action={isAdminMode ? <Button size="sm" variant="admin" onClick={() => setEditing(true)}><Pencil className="size-4" />Edit</Button> : undefined} />
+      {(() => {
+        const can = canChooseEmoji(e.id, isAdminMode, profile?.linked_entity_id);
+        return (
+          <div className="flex items-center gap-4 mb-4">
+            <MemberAvatar entity={e} size="lg" onClick={can ? () => setPicking(true) : undefined} />
+            {can ? <Button variant="secondary" size="sm" onClick={() => setPicking(true)}>{e.emoji ? "Change emoji" : "Choose emoji"}</Button>
+              : <span className="text-sm text-ink-3">{e.emoji ? "Their emoji marks their payments and records" : ""}</span>}
+          </div>
+        );
+      })()}
+      <EmojiPicker entity={e} open={picking} onClose={() => setPicking(false)} />
       {q.error && <ErrorState error={q.error} retry={q.reload} />}
       {q.loading || !q.data ? <ListSkeleton rows={4} /> : (
         <>

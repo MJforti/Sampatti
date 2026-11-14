@@ -252,3 +252,13 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 select admin_touch();
 select pg_temp.act_as(null);
 select pg_temp.ok((select admin_expires_at < now() + interval '2 minutes' from user_sessions where user_id = '00000000-0000-0000-0000-00000000000a'), 'activity does not extend Admin Mode');
+
+-- Member emoji
+select pg_temp.act_as(null);
+update user_profiles set linked_entity_id = (select id from family_entities where name = 'Rajesh Bimal and Associates') where id = '00000000-0000-0000-0000-00000000000c';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select set_member_emoji((select id from family_entities where name = 'Rajesh Bimal and Associates'), '🌸');
+do $$ begin perform set_member_emoji((select id from family_entities where name = 'Rajesh Kumar Jain'), '🦁'); raise exception 'should fail';
+exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - cannot set someone else''s emoji'; end $$;
+select pg_temp.act_as(null);
+select pg_temp.ok((select emoji = '🌸' from family_entities where name = 'Rajesh Bimal and Associates'), 'member set own emoji');

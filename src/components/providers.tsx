@@ -5,10 +5,10 @@ import { supabase } from "@/lib/supabase/client";
 import { DEFAULT_TZ } from "@/lib/dates";
 
 export type Family = { id: string; name: string; is_active: boolean; access_code?: string };
-export type Entity = { id: string; family_id?: string | null; name: string; entity_type: string; is_active: boolean; email?: string | null; phone?: string | null; notes?: string | null; pan_masked?: string | null; sort_order: number };
+export type Entity = { id: string; family_id?: string | null; emoji?: string | null; name: string; entity_type: string; is_active: boolean; email?: string | null; phone?: string | null; notes?: string | null; pan_masked?: string | null; sort_order: number };
 export type Bank = { id: string; entity_id: string; bank_name: string; account_last4: string | null; nickname: string | null };
 export type Vehicle = { id: string; entity_id: string; registration_number: string };
-export type UserProfile = { id: string; email: string; full_name: string | null; role: "admin" | "family_member" | "accountant" | "read_only"; is_active: boolean };
+export type UserProfile = { id: string; email: string; full_name: string | null; role: "admin" | "family_member" | "accountant" | "read_only"; is_active: boolean; linked_entity_id?: string | null };
 export type AdminStatus = {
   is_admin: boolean; pin_configured: boolean; can_bootstrap: boolean; unlocked: boolean;
   expires_at: string | null; session_minutes: number; locked_until: string | null; attempts_left: number;

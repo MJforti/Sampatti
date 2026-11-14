@@ -11,7 +11,7 @@ export function ProfileSelect() {
     <div className="-mx-4 px-4 flex gap-2 overflow-x-auto no-scrollbar py-1" role="tablist" aria-label="Profile">
       <Chip active={!selected} onClick={() => setSelected(null)}>Family</Chip>
       {active.map((e) => (
-        <Chip key={e.id} active={selected === e.id} onClick={() => setSelected(e.id)}>{shortName(e.name)}</Chip>
+        <Chip key={e.id} active={selected === e.id} onClick={() => setSelected(e.id)}>{e.emoji ? <span aria-hidden className="mr-1.5">{e.emoji}</span> : null}{shortName(e.name)}</Chip>
       ))}
     </div>
   );

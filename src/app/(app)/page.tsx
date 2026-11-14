@@ -16,7 +16,8 @@ import { OPEN_STATUSES, isInflow } from "@/lib/status";
 type Summary = Record<string, number | boolean | string>;
 
 export default function Home() {
-  const { profile, selected, tz, unread, entityName, isAdminMode } = useApp();
+  const { profile, selected, tz, unread, entityName, isAdminMode, entities } = useApp();
+  const selEntity = entities.find((x) => x.id === selected);
   const today = todayISO(tz);
   const [range, setRange] = useState<7 | 15 | 30 | "custom">(7);
   const [custom, setCustom] = useState({ from: today, to: addDays(today, 60) });
@@ -64,7 +65,7 @@ export default function Home() {
       <header className="flex items-center justify-between pt-2">
         <div>
           <p className="text-sm text-ink-3">{monthLabel}</p>
-          <h1 className="text-[28px] font-medium tracking-tight">{selected ? entityName(selected) : "Family"}</h1>
+          <h1 className="text-[28px] font-medium tracking-tight">{selEntity?.emoji && <span aria-hidden className="mr-2">{selEntity.emoji}</span>}{selected ? entityName(selected) : "Family"}</h1>
         </div>
         <Link href="/reminders" className="relative size-11 grid place-items-center rounded-full bg-surface border hairline" aria-label={`Notifications, ${unread} unread`}>
           <Bell className="size-5" />

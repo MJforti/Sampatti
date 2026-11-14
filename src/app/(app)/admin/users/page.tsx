@@ -5,7 +5,7 @@ import { Badge, Button, ErrorState, ListSkeleton, PageHeader, Sheet, cx } from "
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
 
-type U = { id: string; email: string; full_name: string | null; role: string; is_active: boolean };
+type U = { id: string; email: string; full_name: string | null; role: string; is_active: boolean; linked_entity_id?: string | null };
 type P = { id: string; user_id: string; entity_id: string; categories: string[] | null; can_view_documents: boolean; receive_notifications: boolean };
 const ROLES = [["admin", "Administrator"], ["family_member", "Family member"], ["accountant", "Accountant"], ["read_only", "Read-only"]];
 const MODS = [["investments", "Investments"], ["insurance", "Insurance"], ["loans", "Loans"], ["vehicles", "Vehicles"], ["banks", "Banks"], ["tax", "Tax"], ["obligations", "Payments"], ["documents", "Documents"]];
@@ -61,6 +61,15 @@ export default function Users() {
       <Sheet open={!!edit} onClose={() => setEdit(null)} title={edit?.full_name || edit?.email || ""}>
         {edit && (
           <div className="space-y-4">
+            <label className="block"><span className="text-sm font-medium text-ink-2">This person is</span>
+              <select className="field mt-1.5" value={(edit as U & { linked_entity_id?: string | null }).linked_entity_id ?? ""} onChange={async (ev) => {
+                const { error } = await sb.rpc("link_user_profile", { p_user: edit.id, p_entity: ev.target.value || null });
+                if (error) return toast(friendlyError(error), "error");
+                toast("Linked"); q.reload(); setEdit({ ...edit, linked_entity_id: ev.target.value || null } as U);
+              }}>
+                <option value="">Not linked to a profile</option>{entities.map((x) => <option key={x.id} value={x.id}>{x.emoji ? x.emoji + " " : ""}{x.name}</option>)}
+              </select>
+              <span className="block mt-1 text-xs text-ink-3">Lets them choose their own emoji</span></label>
             <label className="block"><span className="text-sm font-medium text-ink-2">Role</span>
               <select className="field mt-1.5" value={edit.role} disabled={edit.id === me?.id} onChange={(e) => setRole(edit, { role: e.target.value })}>{ROLES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
             {edit.id !== me?.id && <Button variant="secondary" className="w-full" onClick={() => setRole(edit, { is_active: !edit.is_active })}>{edit.is_active ? "Disable account" : "Enable account"}</Button>}

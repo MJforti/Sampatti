@@ -5,6 +5,7 @@ import { ChevronRight, Plus, Copy, RefreshCw, Pencil } from "lucide-react";
 import { useApp, friendlyError, type Entity, type Family } from "@/components/providers";
 import { Badge, Button, Confirm, ErrorState, ListSkeleton, PageHeader, Sheet } from "@/components/ui";
 import { ProfileForm } from "@/components/profile-form";
+import { MemberAvatar } from "@/components/member-emoji";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
 import { formatINR } from "@/lib/money";
@@ -80,7 +81,7 @@ export default function Profiles() {
               const s = stats(e.id);
               return (
                 <Link key={e.id} href={`/profiles/${e.id}`} className="flex items-center gap-3 px-4 py-3.5 border-b hairline last:border-0 active:bg-surface-2 transition-colors">
-                  <span className="size-10 shrink-0 grid place-items-center rounded-full bg-surface-2 text-[14px] font-medium text-ink-2">{e.name.split(/\s+/).map((w) => w[0]).filter((c) => /[A-Z]/.test(c)).slice(0, 2).join("")}</span>
+                  <MemberAvatar entity={e} />
                   <div className="min-w-0 flex-1">
                     <div className="text-[15px] font-medium truncate">{e.name}</div>
                     <div className="text-[13px] text-ink-3 flex items-center gap-1.5">{TYPE_LABEL[e.entity_type]}{!e.is_active && <Badge tone="muted">Inactive</Badge>}
