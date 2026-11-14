@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui";
@@ -12,6 +12,17 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ t: string; err?: boolean } | null>(null);
 
+  // Email links return here with the session (or an error) in the URL hash.
+  useEffect(() => {
+    const sb = supabase();
+    const h = new URLSearchParams(location.hash.slice(1));
+    if (h.get("error_description")) setMsg({ t: h.get("error_description")!.replace(/\+/g, " ") + ". Request a new link.", err: true });
+    const go = () => { router.replace("/"); router.refresh(); };
+    sb.auth.getSession().then(({ data }) => data.session && go());
+    const { data: sub } = sb.auth.onAuthStateChange((evt) => { if (evt === "SIGNED_IN") go(); });
+    return () => sub.subscription.unsubscribe();
+  }, [router]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true); setMsg(null);
@@ -21,8 +32,8 @@ export default function Login() {
       if (error) setMsg({ t: error.message, err: true });
       else { router.replace("/"); router.refresh(); }
     } else {
-      const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/auth/callback` } });
-      setMsg(error ? { t: error.message, err: true } : { t: "Check your email for a sign-in link." });
+      const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/login` } });
+      setMsg(error ? { t: error.message, err: true } : { t: "Check your email and open the link on any device." });
     }
     setBusy(false);
   };

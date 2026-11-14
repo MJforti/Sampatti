@@ -3,6 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Refreshes the Supabase auth cookie on every request and gates the app behind sign-in.
 export async function middleware(req: NextRequest) {
+  const host = req.headers.get("host") ?? "";
+  const canonical = process.env.NEXT_PUBLIC_CANONICAL_HOST;
+  if (canonical && host !== canonical && host.endsWith(".vercel.app") && !host.includes("-git-")) {
+    const to = req.nextUrl.clone(); to.host = canonical; to.protocol = "https"; to.port = "";
+    return NextResponse.redirect(to, 308);
+  }
   let res = NextResponse.next({ request: req });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return res;
