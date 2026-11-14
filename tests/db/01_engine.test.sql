@@ -163,3 +163,16 @@ select pg_temp.ok((dashboard_summary()->>'monthly_emi')::bigint = 2500000, 'dash
 select pg_temp.ok((select count(*) > 0 from financial_calendar_events), 'calendar view populated');
 select pg_temp.ok((select count(*) > 5 from administrator_audit_logs), 'audit log captured');
 select pg_temp.act_as(null);
+
+-- Pre-assigned admin (automated setup) can still choose the PIN once
+select pg_temp.act_as(null);
+update admin_settings set pin_hash = null, bootstrap_admin_email = 'member@example.com';
+update user_profiles set role = 'admin' where email = 'member@example.com';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.ok((admin_status()->>'can_bootstrap')::boolean, 'pre-assigned admin can set PIN');
+select bootstrap_admin('5937');
+select pg_temp.ok((verify_admin_pin('5937')->>'ok')::boolean, 'pre-assigned admin unlocks with new PIN');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+do $$ begin perform bootstrap_admin('6048'); raise exception 'should fail'; exception when others then
+  if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - PIN cannot be re-bootstrapped'; end $$;
+select pg_temp.act_as(null);
