@@ -169,7 +169,7 @@ function PinSheet() {
               </button>
             ))}
         </div>
-        <p className="mt-5 text-xs text-ink-3">The PIN is verified on the server. Admin Mode locks automatically after {admin?.session_minutes ?? 10} minutes of inactivity.</p>
+        <p className="mt-5 text-xs text-ink-3">The PIN is verified on the server. Admin Mode locks automatically {admin?.session_minutes ?? 10} minutes after you unlock it.</p>
       </div>
     </Sheet>
   );

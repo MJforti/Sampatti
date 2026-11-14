@@ -69,7 +69,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [pinOpen, setPinOpen] = useState(false);
   const [toasts, setToasts] = useState<{ id: number; msg: string; tone: string }[]>([]);
   const [unread, setUnread] = useState(0);
-  const lastTouch = useRef(0);
 
   const toast = useCallback((msg: string, tone: "ok" | "error" = "ok") => {
     const id = Date.now() + Math.random();
@@ -138,19 +137,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   const isAdminMode = !!admin?.unlocked && !!admin.expires_at && new Date(admin.expires_at) > new Date();
 
-  // Auto-lock: client timer mirrors the server expiry; activity slides the window (server-side).
+  // Auto-lock: Admin Mode ends at a fixed time after unlocking; the server enforces it, this timer updates the screen.
   useEffect(() => {
     if (!isAdminMode || !admin?.expires_at) return;
     const ms = new Date(admin.expires_at).getTime() - Date.now();
-    const t = setTimeout(() => { refreshAdmin().then((s) => { if (s && !s.unlocked) toast("Admin Mode locked after inactivity"); }); }, Math.max(ms, 0) + 500);
-    const onActivity = () => {
-      if (Date.now() - lastTouch.current < 45_000) return;
-      lastTouch.current = Date.now();
-      sb.rpc("admin_touch").then(({ data }) => data && setAdmin(data as AdminStatus));
-    };
-    window.addEventListener("pointerdown", onActivity);
-    window.addEventListener("keydown", onActivity);
-    return () => { clearTimeout(t); window.removeEventListener("pointerdown", onActivity); window.removeEventListener("keydown", onActivity); };
+    const t = setTimeout(() => { refreshAdmin().then((s) => { if (s && !s.unlocked) toast("Admin Mode locked. Enter your PIN to continue"); }); }, Math.max(ms, 0) + 500);
+    // phones pause timers in the background: re-check as soon as the app is visible again
+    const onVisible = () => { if (document.visibilityState === "visible" && new Date(admin.expires_at!) <= new Date()) refreshAdmin(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearTimeout(t); document.removeEventListener("visibilitychange", onVisible); };
   }, [isAdminMode, admin?.expires_at, refreshAdmin, sb, toast]);
 
   const lockAdmin = useCallback(async () => {

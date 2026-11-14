@@ -107,7 +107,7 @@ export default function Settings() {
                 <label className="block"><span className="text-sm text-ink-2">Days before due date</span><input className="field mt-1.5 num" value={app.offsets} onChange={(e) => setApp({ ...app, offsets: e.target.value })} /></label>
                 <label className="block"><span className="text-sm text-ink-2">Repeat overdue reminders every (days)</span><input inputMode="numeric" className="field mt-1.5" value={app.overdue} onChange={(e) => setApp({ ...app, overdue: e.target.value })} /></label>
                 <label className="block"><span className="text-sm text-ink-2">Timezone</span><input className="field mt-1.5" value={app.timezone} onChange={(e) => setApp({ ...app, timezone: e.target.value })} /></label>
-                <label className="block"><span className="text-sm text-ink-2">Admin Mode auto-lock (minutes)</span><input inputMode="numeric" className="field mt-1.5" value={app.minutes} onChange={(e) => setApp({ ...app, minutes: e.target.value })} /></label>
+                <label className="block"><span className="text-sm text-ink-2">Admin Mode lasts (minutes)</span><input inputMode="numeric" className="field mt-1.5" value={app.minutes} onChange={(e) => setApp({ ...app, minutes: e.target.value })} /></label>
                 <label className="block"><span className="text-sm text-ink-2">App URL (for email links)</span><input className="field mt-1.5" value={app.app_url} onChange={(e) => setApp({ ...app, app_url: e.target.value })} /></label>
                 <Button className="w-full" onClick={() => {
                   const offs = app.offsets.split(/[\s,]+/).filter(Boolean).map(Number);

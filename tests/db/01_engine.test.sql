@@ -244,3 +244,11 @@ select pg_temp.ok((select count(*) = 1 from family_memberships where user_id = '
 select pg_temp.ok((select count(*) = 1 from entity_permissions where user_id = '00000000-0000-0000-0000-00000000000c'), 'access moved to the new family only');
 do $$ begin insert into family_memberships (user_id, family_id) select '00000000-0000-0000-0000-00000000000c', id from families where name = 'Jain Family'; raise exception 'should fail';
 exception when others then if sqlerrm = 'should fail' then raise; end if; raise notice 'ok - database blocks a second family'; end $$;
+
+-- Admin window is fixed: touching does not extend it
+select pg_temp.act_as(null);
+update user_sessions set admin_expires_at = now() + interval '1 minute' where user_id = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select admin_touch();
+select pg_temp.act_as(null);
+select pg_temp.ok((select admin_expires_at < now() + interval '2 minutes' from user_sessions where user_id = '00000000-0000-0000-0000-00000000000a'), 'activity does not extend Admin Mode');
