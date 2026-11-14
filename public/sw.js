@@ -1,5 +1,5 @@
 // Sampatti service worker: app-shell caching + web push. Financial data is never cached.
-const CACHE = "sampatti-shell-v1";
+const CACHE = "sampatti-shell-v2"; // bump to purge old caches
 const SHELL = ["/offline.html", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (e) => {
@@ -14,8 +14,10 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return; // Supabase API calls go straight to network
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
+    // Hashed build files never change, so cache-first is safe — but only ever store good responses.
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); return res;
+      if (res.ok && res.status === 200) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+      return res;
     })));
     return;
   }
