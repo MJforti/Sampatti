@@ -79,7 +79,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       sb.from("family_entities").select("*").order("sort_order").order("name"),
       sb.from("bank_accounts").select("id, entity_id, bank_name, account_last4, nickname").is("archived_at", null).order("bank_name"),
       sb.from("vehicles").select("id, entity_id, registration_number").is("archived_at", null),
-      sb.from("app_settings").select("*").maybeSingle(),
+      sb.rpc("get_app_settings"),
     ]);
     if (e.data) setEntities(e.data);
     if (b.data) setBanks(b.data);
