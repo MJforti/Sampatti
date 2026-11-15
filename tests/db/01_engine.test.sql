@@ -292,3 +292,10 @@ select pg_temp.ok((select count(*) >= 2 from families), 'ultra admin sees every 
 insert into bank_accounts (entity_id, bank_name) values (current_setting('t.other')::uuid, 'Axis');
 select pg_temp.ok(true, 'ultra admin writes anywhere');
 select pg_temp.act_as(null);
+
+-- Ultra admin creates a family through the app's own role (not as postgres)
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select verify_admin_pin('4826');
+insert into families (name) values ('Gangwal Family');
+select pg_temp.act_as(null);
+select pg_temp.ok((select access_code ~ '^[A-Z0-9]{4}-[A-Z0-9]{4}$' from families where name = 'Gangwal Family'), 'ultra admin can create a family with a code');
