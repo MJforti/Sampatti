@@ -23,6 +23,9 @@ export function Splash() {
   );
 }
 
+/** How long the splash stays up, long enough for the whole animation. */
+export const INTRO_MS = 2600;
+
 /** True while the intro should play: on every launch of the installed app, and once per browser session for each place (login, app open) in a browser tab. */
 export function useIntro(place: "login" | "app") {
   const [intro, setIntro] = useState(true);
@@ -32,7 +35,7 @@ export function useIntro(place: "login" | "app") {
     // Opened from the home-screen icon: play on every launch (phones can keep the old session around)
     const installed = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
     if (seen && !installed) { setIntro(false); return; }
-    const t = setTimeout(() => setIntro(false), 2600);
+    const t = setTimeout(() => setIntro(false), INTRO_MS);
     return () => clearTimeout(t);
   }, []);
   return intro;

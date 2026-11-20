@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui";
-import { Splash, useIntro, replayIntroOnAppOpen } from "@/components/splash";
+import { Splash, useIntro, replayIntroOnAppOpen, INTRO_MS } from "@/components/splash";
 
 export default function Login() {
   const intro = useIntro("login");
+  const [signupIntro, setSignupIntro] = useState(false);
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
@@ -39,7 +40,7 @@ export default function Login() {
   };
 
   const signup = mode === "signup";
-  if (intro) return <Splash />;
+  if (intro || signupIntro) return <Splash />;
   return (
     <main className="min-h-dvh flex flex-col justify-center px-6 max-w-sm mx-auto safe-top safe-bottom">
       <div className="mb-10">
@@ -48,7 +49,7 @@ export default function Login() {
       </div>
       <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-surface-2 mb-5" role="tablist">
         {(["signin", "signup"] as const).map((m) => (
-          <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { setMode(m); setMsg(null); }}
+          <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { if (m === "signup" && mode !== "signup") { setSignupIntro(true); setTimeout(() => setSignupIntro(false), INTRO_MS); } setMode(m); setMsg(null); }}
             className={`h-10 rounded-xl text-sm font-medium transition-colors ${mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-3"}`}>
             {m === "signin" ? "Sign in" : "Create account"}
           </button>
