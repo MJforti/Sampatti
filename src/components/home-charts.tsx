@@ -18,7 +18,7 @@ type Inv = { category: string; invested_paise: number; current_value_paise: numb
 type Loan = { loan_type: string; lender: string; principal_paise: number; outstanding_paise: number };
 type Pol = { category: string; sum_assured_paise: number | null; premium_paise: number | null };
 
-export function HomeCharts({ entity }: { entity: string | null }) {
+export function HomeCharts({ entity, hideOutflow }: { entity: string | null; hideOutflow?: boolean }) {
   const q = useQuery(async () => {
     const sb = supabase();
     const f = <T,>(x: T) => x as any;
@@ -32,11 +32,11 @@ export function HomeCharts({ entity }: { entity: string | null }) {
   }, [entity]);
   if (!q.data) return null;
   const { inv, loans, pols, out } = q.data;
-  const hasAny = out.some((r) => r.amount_paise > 0) || inv.some((r) => (r.current_value_paise ?? r.invested_paise) > 0) || loans.length || pols.some((p) => p.sum_assured_paise);
+  const hasAny = (!hideOutflow && out.some((r) => r.amount_paise > 0)) || inv.some((r) => (r.current_value_paise ?? r.invested_paise) > 0) || loans.length || pols.some((p) => p.sum_assured_paise);
   if (!hasAny) return null;
   return (
     <>
-      <OutflowChart rows={out} />
+      {!hideOutflow && <OutflowChart rows={out} />}
       <Allocation rows={inv} />
       <Loans rows={loans} />
       <Cover rows={pols} />

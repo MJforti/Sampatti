@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Download, Printer } from "lucide-react";
 import { useApp } from "@/components/providers";
+import { HomeCharts } from "@/components/home-charts";
 import { ProfileSelect } from "@/components/profile-select";
 import { MemberAvatar } from "@/components/member-emoji";
 import { Button, Chip, ErrorState, ListSkeleton, PageHeader, SectionTitle, cx } from "@/components/ui";
@@ -148,6 +149,7 @@ export default function Outflow() {
           <p className="mt-4 px-1 text-xs text-ink-3">Projected from each item’s next due date and how often it repeats. This month includes anything still unpaid; overdue items from earlier months aren’t included. EMIs are assumed to continue for the whole period.</p>
         </>
       )}
+      <HomeCharts entity={selected} hideOutflow />
     </div>
   );
 }
