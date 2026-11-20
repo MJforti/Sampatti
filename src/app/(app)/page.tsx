@@ -7,6 +7,7 @@ import { ProfileSelect } from "@/components/profile-select";
 import { EventList, type CalEvent } from "@/components/obligations";
 import { Chip, ErrorState, ListSkeleton, SectionTitle, Skeleton, cx } from "@/components/ui";
 import { AdminToggle } from "@/components/shell";
+import { HomeCharts } from "@/components/home-charts";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
 import { addDays, daysBetween, todayISO } from "@/lib/dates";
@@ -163,6 +164,8 @@ export default function Home() {
           </div>
         )
       )}
+
+      <HomeCharts entity={selected} />
 
       {/* Completed */}
       <SectionTitle>Completed this month</SectionTitle>
