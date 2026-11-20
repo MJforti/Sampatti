@@ -38,6 +38,15 @@ export default function Home() {
   }, [selected, today]);
 
   const summary = useQuery(async () => unwrap(await supabase().rpc("dashboard_summary", { p_entity: selected })) as Summary, [selected]);
+  const alts = useQuery(async () => {
+    let qq = supabase().from("investments").select("invested_paise, current_value_paise, category, details").in("category", ["pms", "aif"]).is("archived_at", null);
+    if (selected) qq = qq.eq("entity_id", selected);
+    const rows = unwrap(await qq) as { invested_paise: number; current_value_paise: number | null; category: string; details: Record<string, any> | null }[];
+    const invested = sumPaise(rows.map((r) => r.invested_paise));
+    const current = sumPaise(rows.map((r) => r.current_value_paise ?? r.invested_paise));
+    const undrawn = sumPaise(rows.filter((r) => r.category === "aif").map((r) => Math.max(0, Number(r.details?.aif_commitment_paise ?? 0) - Number(r.details?.aif_drawn_paise ?? 0))));
+    return { count: rows.length, invested, current, undrawn };
+  }, [selected]);
 
   const all = events.data ?? [];
   const urgent = all.filter((e) => daysBetween(today, e.event_date) <= 3);
@@ -141,6 +150,11 @@ export default function Home() {
           <div className="card px-4">
             <Line label="Investments, current value" value={summary.data.current_value as number} note={summary.data.values_verified ? undefined : "includes estimates"} />
             <Line label="Invested" value={summary.data.invested as number} />
+            {alts.data && alts.data.count > 0 && (
+              <Line label="PMS & AIF, current value" value={alts.data.current}
+                note={alts.data.invested ? `${alts.data.current >= alts.data.invested ? "+" : "−"}${(Math.abs(alts.data.current - alts.data.invested) / alts.data.invested * 100).toFixed(1)}% on ${formatINRCompact(alts.data.invested)}` : undefined} />
+            )}
+            {alts.data && alts.data.undrawn > 0 && <Line label="AIF still to be called" value={alts.data.undrawn} note="keep ready" />}
             <Line label="Loans outstanding" value={summary.data.loans_outstanding as number} />
             <Line label="EMIs per month" value={summary.data.monthly_emi as number} />
             <Line label="SIPs per month" value={summary.data.monthly_sip as number} />
