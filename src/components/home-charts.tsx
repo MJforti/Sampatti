@@ -55,9 +55,9 @@ function OutflowChart({ rows }: { rows: OutflowRow[] }) {
   const sel = pick ?? months[0];
   const si = months.indexOf(sel);
   return (
-    <>
-      <SectionTitle action={<Link href="/outflow" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Details</Link>}>Cash outflow, next 12 months</SectionTitle>
-      <div className="card p-4">
+    <div className="break-inside-avoid">
+      <SectionTitle action={<Link href="/outflow" className="no-print inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Details</Link>}>Cash outflow, next 12 months</SectionTitle>
+      <div className="card p-4 break-inside-avoid">
         <div className="flex items-baseline justify-between gap-2">
           <div><div className="text-[13px] text-ink-3">{monthLabel(sel, "long")}</div><div className="num text-[22px] font-medium">{formatINR(totals[si])}</div></div>
           <div className="text-right"><div className="text-[13px] text-ink-3">12 months</div><div className="num text-[15px]">{formatINRCompact(sumPaise(totals))}</div></div>
@@ -78,7 +78,7 @@ function OutflowChart({ rows }: { rows: OutflowRow[] }) {
           ); })}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -92,9 +92,9 @@ function Allocation({ rows }: { rows: Inv[] }) {
   const segs = rest.length ? [...top, ["others", { cur: sumPaise(rest.map(([, v]) => v.cur)), inv: sumPaise(rest.map(([, v]) => v.inv)) }] as const] : top;
   const gain = total - invested;
   return (
-    <>
-      <SectionTitle action={<Link href="/m/investments" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Investments</Link>}>Where your money is</SectionTitle>
-      <div className="card p-4">
+    <div className="break-inside-avoid">
+      <SectionTitle action={<Link href="/m/investments" className="no-print inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Investments</Link>}>Where your money is</SectionTitle>
+      <div className="card p-4 break-inside-avoid">
         <div className="flex items-baseline justify-between gap-2">
           <div><div className="text-[13px] text-ink-3">Current value</div><div className="num text-[22px] font-medium">{formatINR(total)}</div></div>
           {invested > 0 && <div className="text-right"><div className="text-[13px] text-ink-3">Gain on {formatINRCompact(invested)}</div>
@@ -114,7 +114,7 @@ function Allocation({ rows }: { rows: Inv[] }) {
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -122,9 +122,9 @@ function Loans({ rows }: { rows: Loan[] }) {
   if (!rows.length) return null;
   const P = sumPaise(rows.map((r) => r.principal_paise)), O = sumPaise(rows.map((r) => r.outstanding_paise));
   return (
-    <>
-      <SectionTitle action={<Link href="/m/loans" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Loans</Link>}>Loans repaid so far</SectionTitle>
-      <div className="card p-4">
+    <div className="break-inside-avoid">
+      <SectionTitle action={<Link href="/m/loans" className="no-print inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Loans</Link>}>Loans repaid so far</SectionTitle>
+      <div className="card p-4 break-inside-avoid">
         <div className="flex items-baseline justify-between gap-2">
           <div><div className="text-[13px] text-ink-3">Still to repay</div><div className="num text-[22px] font-medium">{formatINR(O)}</div></div>
           {P > 0 && <div className="text-right"><div className="text-[13px] text-ink-3">Repaid</div><div className="num text-[15px] text-accent">{Math.max(0, Math.round((1 - O / P) * 100))}%</div></div>}
@@ -141,7 +141,7 @@ function Loans({ rows }: { rows: Loan[] }) {
           })}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -153,9 +153,9 @@ function Cover({ rows }: { rows: Pol[] }) {
   const max = list[0][1];
   const premium = sumPaise(rows.map((r) => r.premium_paise));
   return (
-    <>
-      <SectionTitle action={<Link href="/m/insurance" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Insurance</Link>}>Insurance cover</SectionTitle>
-      <div className="card p-4">
+    <div className="break-inside-avoid">
+      <SectionTitle action={<Link href="/m/insurance" className="no-print inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Insurance</Link>}>Insurance cover</SectionTitle>
+      <div className="card p-4 break-inside-avoid">
         <div className="flex items-baseline justify-between gap-2">
           <div><div className="text-[13px] text-ink-3">Total cover</div><div className="num text-[22px] font-medium">{formatINR(sumPaise(list.map(([, v]) => v)))}</div></div>
           {premium > 0 && <div className="text-right"><div className="text-[13px] text-ink-3">Premiums</div><div className="num text-[15px]">{formatINRCompact(premium)}</div></div>}
@@ -170,6 +170,6 @@ function Cover({ rows }: { rows: Pol[] }) {
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }

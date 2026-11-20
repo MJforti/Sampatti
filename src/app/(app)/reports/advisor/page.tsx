@@ -2,6 +2,7 @@
 import { Printer } from "lucide-react";
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { HomeCharts } from "@/components/home-charts";
 import { ProfileSelect } from "@/components/profile-select";
 import { useApp } from "@/components/providers";
 import { Button, ErrorState, ListSkeleton, PageHeader } from "@/components/ui";
@@ -166,6 +167,7 @@ function AdvisorReport() {
             <div key={l as string} className="border hairline rounded-xl px-3 py-2.5"><div className="text-[12px] text-ink-3">{l}</div><div className="num text-[17px] font-medium">{formatINR(v as number)}</div></div>
           ))}
         </div>
+        <div className="report-charts"><HomeCharts entity={selected} /></div>
 
         <H n={2}>Recommendations</H>
         {recs.length ? (
