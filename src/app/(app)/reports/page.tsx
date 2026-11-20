@@ -9,6 +9,7 @@ import { formatINR, paiseToInput, sumPaise } from "@/lib/money";
 import { OPEN_STATUSES, isInflow } from "@/lib/status";
 import type { CalEvent } from "@/components/obligations";
 import Link from "next/link";
+import { HomeCharts } from "@/components/home-charts";
 import { MemberAvatar } from "@/components/member-emoji";
 import { outflowMonths, outflowSheet, downloadCsv, type OutflowRow } from "@/lib/outflow";
 
@@ -114,6 +115,8 @@ export default function Reports() {
           </div>
         </>
       )}
+
+      <HomeCharts entity={null} />
 
       <SectionTitle>Upcoming outflows</SectionTitle>
       <div className="card px-4 py-4 space-y-3">
