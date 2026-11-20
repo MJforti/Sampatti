@@ -29,7 +29,7 @@ export function Splash({ message, place, greeting }: { message?: string; place?:
             {"Sampatti".split("").map((ch, i) => <span key={i} className="splash-letter inline-block" style={{ animationDelay: `${1.1 + i * 0.07}s` }}>{ch}</span>)}
           </div>
         </div>
-        <p className="splash-tag mt-3 text-sm text-ink-3">Every rupee, in its place.</p>
+        <p className="splash-tag mt-3 text-[16px] text-ink-3">Every rupee, in its place.</p>
         {note && (
           <p className="splash-note mt-6 inline-flex items-center gap-2 rounded-full bg-accent-soft text-accent px-4 h-9 text-sm font-medium" aria-live="polite">
             {tick && <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
