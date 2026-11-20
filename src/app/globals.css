@@ -94,8 +94,22 @@ input, select, textarea { font-size: 16px; } /* prevents iOS zoom */
 
 }
 
+@page { size: A4; margin: 14mm 12mm; }
 @media print {
-  nav, header, .no-print { display: none !important; }
+  /* Always print in light colours, whatever the screen theme */
+  :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
+    --bg: #ffffff !important; --surface: #ffffff !important; --surface-2: #f2f2f2 !important;
+    --ink: #111111 !important; --ink-2: #333333 !important; --ink-3: #666666 !important; --line: #d9d9d9 !important;
+    --accent: #1d5c4a !important; --ok: #1f7a4d !important; --ok-soft: #e2f3ea !important; --warn: #8a4e00 !important;
+    --warn-soft: #fbefd9 !important; --danger: #a32d1b !important; --danger-soft: #fbe5e1 !important; color-scheme: light;
+  }
+  html, body { background: #fff !important; color: #111 !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  aside, nav, .no-print { display: none !important; }
+  main { max-width: none !important; padding: 0 !important; }
+  .report { border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+  .report-h { break-after: avoid; }
+  .report-avoid, .report tr { break-inside: avoid; }
   body { background: #fff; color: #000; }
   .card { box-shadow: none; border-color: #ccc; break-inside: avoid; }
 }

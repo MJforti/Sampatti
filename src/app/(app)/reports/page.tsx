@@ -69,7 +69,7 @@ export default function Reports() {
       <PageHeader title="Reports" subtitle={`As of ${today.split("-").reverse().join("/")} · values marked (est.) are manual estimates`} back="/more" />
       <div className="grid grid-cols-2 gap-2 no-print">
         <Button variant="secondary" onClick={exportAll}><Download className="size-4" />CSV / Excel</Button>
-        <Button variant="secondary" onClick={() => window.print()}><Printer className="size-4" />Print / PDF</Button>
+        <Link href="/reports/advisor" className="inline-flex items-center justify-center gap-2 h-12 px-4 rounded-2xl bg-accent text-accent-ink font-medium text-[15px]"><Printer className="size-4" />Financial report (PDF)</Link>
         <Button variant="secondary" className="col-span-2" onClick={exportOutflow} disabled={!outTotal}><Download className="size-4" />Cash outflow only (CSV / Excel)</Button>
       </div>
 

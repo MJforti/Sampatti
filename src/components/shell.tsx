@@ -48,7 +48,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {isAdminMode && (
-        <div className="sticky top-0 z-40 bg-bg/95 backdrop-blur border-b hairline safe-top">
+        <div className="no-print sticky top-0 z-40 bg-bg/95 backdrop-blur border-b hairline safe-top">
           <div className="mx-auto max-w-3xl flex items-center gap-2 px-4 h-12 text-sm text-ink-2">
             <span className="size-2 rounded-full bg-accent" aria-hidden />
             <span className="font-medium text-ink">{admin?.is_ultra ? "Ultra admin" : `${admin?.family_name ?? "Family"} admin`}</span>
