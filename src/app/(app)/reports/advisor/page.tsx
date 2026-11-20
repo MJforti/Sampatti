@@ -172,15 +172,6 @@ function AdvisorReport() {
         </div>
         <div className="report-charts"><HomeCharts entity={selected} /></div>
 
-        <H n={++sec}>Recommendations</H>
-        {recs.length ? (
-          <ol className="space-y-3">{recs.map((r, i) => (
-            <li key={i} className="report-avoid flex gap-3">
-              <span className={`shrink-0 mt-0.5 text-[11px] font-medium px-2 py-0.5 rounded-full h-fit ${r.level === "Act now" ? "bg-danger-soft text-danger" : r.level === "Plan" ? "bg-warn-soft text-warn" : "bg-surface-2 text-ink-2"}`}>{r.level}</span>
-              <div><div className="text-[14px] font-medium">{r.title}</div><p className="text-[13px] text-ink-2 leading-relaxed mt-0.5">{r.body}</p></div>
-            </li>))}</ol>
-        ) : <p className="text-[14px] text-ink-2">No issues found in the recorded data. Keep records and statement values up to date.</p>}
-
         <H n={++sec}>Due in the next 30 days</H>
         {next30.length ? <T head={["Date", "Item", "Profile", "Account", "Amount"]} num={[4]}
           rows={[...next30.map((e) => [formatDate(e.event_date, "short"), e.title, e.entity_name, e.bank_name ? `${e.bank_name}${e.account_last4 ? " ••" + e.account_last4 : ""}` : "", e.amount_paise != null ? formatINR(e.amount_paise) : ""]),
@@ -247,6 +238,15 @@ function AdvisorReport() {
                 formatINR(sumPaise(outRows.filter((r) => r.entity_id === m.id).map((r) => r.amount_paise)))])} />
           </>
         )}
+
+        <H n={++sec}>Recommendations</H>
+        {recs.length ? (
+          <ol className="space-y-3">{recs.map((r, i) => (
+            <li key={i} className="report-avoid flex gap-3">
+              <span className={`shrink-0 mt-0.5 text-[11px] font-medium px-2 py-0.5 rounded-full h-fit ${r.level === "Act now" ? "bg-danger-soft text-danger" : r.level === "Plan" ? "bg-warn-soft text-warn" : "bg-surface-2 text-ink-2"}`}>{r.level}</span>
+              <div><div className="text-[14px] font-medium">{r.title}</div><p className="text-[13px] text-ink-2 leading-relaxed mt-0.5">{r.body}</p></div>
+            </li>))}</ol>
+        ) : <p className="text-[14px] text-ink-2">No issues found in the recorded data. Keep records and statement values up to date.</p>}
 
         <footer className="mt-8 pt-3 border-t hairline text-[11px] text-ink-3 leading-relaxed">
           This report is generated from the records entered in Sampatti on {formatDate(today)}. Values marked as estimates, projected outflows and recommendations are based only on that data and general financial principles. It is not investment, tax or legal advice from a SEBI-registered adviser; please consult a qualified professional before acting on it.
