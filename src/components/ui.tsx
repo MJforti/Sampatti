@@ -77,13 +77,13 @@ export function Sheet({ open, onClose, title, children, footer }: {
   );
 }
 
-export function Confirm({ open, title, message, confirmLabel = "Confirm", danger, onConfirm, onClose, loading }: {
-  open: boolean; title: string; message: ReactNode; confirmLabel?: string; danger?: boolean;
-  onConfirm: () => void; onClose: () => void; loading?: boolean;
+export function Confirm({ open, title, message, confirmLabel = "Confirm", cancelLabel = "Cancel", onCancel, danger, onConfirm, onClose, loading }: {
+  open: boolean; title: string; message: ReactNode; confirmLabel?: string; cancelLabel?: string; danger?: boolean;
+  onConfirm: () => void; onClose: () => void; onCancel?: () => void; loading?: boolean;
 }) {
   return (
     <Sheet open={open} onClose={onClose} title={title}
-      footer={<div className="flex gap-2"><Button variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
+      footer={<div className="flex gap-2"><Button variant="secondary" className="flex-1" onClick={onCancel ?? onClose}>{cancelLabel}</Button>
         <Button variant={danger ? "danger" : "primary"} className="flex-1" onClick={onConfirm} loading={loading}>{confirmLabel}</Button></div>}>
       <div className="text-[15px] text-ink-2 leading-relaxed">{message}</div>
     </Sheet>

@@ -5,7 +5,7 @@ import { FREQUENCIES } from "@/lib/modules";
 import { paiseToInput, parseRupeesToPaise } from "@/lib/money";
 import { supabase } from "@/lib/supabase/client";
 import { useApp, friendlyError } from "./providers";
-import { Button, Sheet, cx } from "./ui";
+import { Button, Confirm, Sheet, cx } from "./ui";
 
 type Rec = Record<string, any>;
 
@@ -81,6 +81,9 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
     // Leave a dated "cleared" marker so other devices drop their older copies too
     if (user) supabase().from("form_drafts").upsert({ form_key: formKey, data: { [CLEARED]: true }, updated_at: new Date().toISOString() }).then(() => {});
   };
+  // Closing with unsaved entries asks whether to keep them as a draft
+  const [askClose, setAskClose] = useState(false);
+  const requestClose = () => (differs(vals, initial) ? setAskClose(true) : onClose());
   const discardDraft = () => { clearDraft(); setVals(initial); setRestored(false); };
 
   const set = (k: string, v: unknown) => setVals((s) => ({ ...s, [k]: v }));
@@ -133,7 +136,8 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
 
   let lastSection: string | undefined;
   return (
-    <Sheet open={open} onClose={onClose} title={record?.id ? `Edit ${mod.singular.toLowerCase()}` : `Add ${mod.singular.toLowerCase()}`}
+    <>
+    <Sheet open={open} onClose={requestClose} title={record?.id ? `Edit ${mod.singular.toLowerCase()}` : `Add ${mod.singular.toLowerCase()}`}
       footer={<Button className="w-full" size="lg" onClick={save} loading={busy}>{record?.id ? "Save changes" : `Add ${mod.singular.toLowerCase()}`}</Button>}>
       <div className="space-y-4 pb-4">
         {restored && (
@@ -156,6 +160,11 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
         })}
       </div>
     </Sheet>
+    <Confirm open={askClose} onClose={() => setAskClose(false)} title="Keep this draft?" danger
+      message="Your entries are saved as a draft, so you can finish later on any of your devices. Discard them to start fresh next time."
+      cancelLabel="Keep draft" onCancel={() => { setAskClose(false); onClose(); }}
+      confirmLabel="Discard draft" onConfirm={() => { discardDraft(); setAskClose(false); onClose(); }} />
+    </>
   );
 }
 
