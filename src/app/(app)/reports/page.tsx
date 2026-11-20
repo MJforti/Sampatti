@@ -31,12 +31,19 @@ export default function Reports() {
     const ev = unwrap(await sb.from("financial_calendar_events").select("*").in("status", OPEN_STATUSES).lte("event_date", addDays(today, 90))) as CalEvent[];
     const paid = unwrap(await sb.from("financial_calendar_events").select("*").in("status", ["paid"]).gte("paid_on", today.slice(0, 8) + "01")) as CalEvent[];
     const out = unwrap(await sb.rpc("projected_outflows", { p_months: 12 })) as OutflowRow[];
-    return { fam, per, ev: ev.filter((e) => !isInflow(e.category)), paid, out };
+    const alts = unwrap(await sb.from("investments").select("id, entity_id, category, name, institution, invested_paise, current_value_paise, details")
+      .in("category", ["pms", "aif"]).is("archived_at", null).order("category").order("name")) as
+      { id: string; entity_id: string; category: string; name: string; institution: string | null; invested_paise: number; current_value_paise: number | null; details: Record<string, any> | null }[];
+    return { fam, per, ev: ev.filter((e) => !isInflow(e.category)), paid, out, alts };
   }, [entities, today]);
 
   if (q.error) return <ErrorState error={q.error} retry={q.reload} />;
   if (q.loading || !q.data) return <div><PageHeader title="Reports" back="/more" /><ListSkeleton rows={6} /></div>;
-  const { fam, per, ev, paid, out } = q.data;
+  const { fam, per, ev, paid, out, alts } = q.data;
+  const altCur = (x: (typeof alts)[number]) => x.current_value_paise ?? x.invested_paise;
+  const altUndrawn = (x: (typeof alts)[number]) => x.category === "aif" ? Math.max(0, Number(x.details?.aif_commitment_paise ?? 0) - Number(x.details?.aif_drawn_paise ?? 0)) : 0;
+  const altKind = (x: (typeof alts)[number]) => x.category === "pms" ? "PMS" : `AIF ${({ cat1: "Cat I", cat2: "Cat II", cat3: "Cat III" } as Record<string, string>)[x.details?.aif_category] ?? ""}`.trim();
+  const altInv = sumPaise(alts.map((x) => x.invested_paise)), altNow = sumPaise(alts.map(altCur)), altCall = sumPaise(alts.map(altUndrawn));
   const outKeys = outflowMonths(out, 12, today);
   const outRows = out.filter((r) => outKeys.includes(r.month));
   const outTotal = sumPaise(outRows.map((r) => r.amount_paise));
@@ -60,6 +67,9 @@ export default function Reports() {
     ["Family total", ...cols.map((c) => paiseToInput(fam[c]))],
     [], ["Upcoming outflows", "Amount (₹)"], ...buckets.map((b) => [`Next ${b.d} days`, paiseToInput(b.v)]),
     [], ["Bank (next 30 days)", "Items", "Amount (₹)"], ...[...banks.values()].map((b) => [b.label, b.n, paiseToInput(b.v30)]),
+    ...(alts.length ? [[], ["PMS & AIF holding", "Type", "Profile", "Manager", "Invested (₹)", "Current (₹)", "Gain (₹)", "Still to be called (₹)"],
+      ...alts.map((x) => [x.name, altKind(x), nameOf(x.entity_id), x.institution ?? "", paiseToInput(x.invested_paise), paiseToInput(altCur(x)), paiseToInput(altCur(x) - x.invested_paise), paiseToInput(altUndrawn(x)) || "0"]),
+      ["Total", "", "", "", paiseToInput(altInv), paiseToInput(altNow), paiseToInput(altNow - altInv), paiseToInput(altCall) || "0"]] : []),
     [], ...outflowSheet(out, outKeys, nameOf, "Family"),
     [], ["Upcoming item", "Profile", "Due", "Amount (₹)", "Bank", "Status"], ...ev.sort((a, b) => a.event_date.localeCompare(b.event_date)).map((e) => [e.title, e.entity_name, e.event_date, paiseToInput(e.amount_paise), e.bank_name ?? "", e.status]),
   ]);
@@ -77,6 +87,33 @@ export default function Reports() {
       <div className="card px-4 py-4 grid grid-cols-2 gap-y-3 gap-x-4">
         {cols.map((c) => <div key={c}><div className="text-[12px] text-ink-3">{colLabel[c]}{c === "current_value" && !fam.values_verified ? " (est.)" : ""}</div><div className="num font-semibold">{formatINR(fam[c])}</div></div>)}
       </div>
+
+      {alts.length > 0 && (
+        <>
+          <SectionTitle>PMS &amp; AIF</SectionTitle>
+          <div className="card px-4 py-4 grid grid-cols-2 gap-y-3 gap-x-4">
+            <div><div className="text-[12px] text-ink-3">Invested</div><div className="num font-medium">{formatINR(altInv)}</div></div>
+            <div><div className="text-[12px] text-ink-3">Current value</div><div className="num font-medium">{formatINR(altNow)}</div></div>
+            <div><div className="text-[12px] text-ink-3">Gain / loss</div><div className={`num font-medium ${altNow >= altInv ? "text-ok" : "text-danger"}`}>{altNow >= altInv ? "+" : "−"}{formatINR(Math.abs(altNow - altInv))}{altInv ? ` (${(Math.abs(altNow - altInv) / altInv * 100).toFixed(1)}%)` : ""}</div></div>
+            <div><div className="text-[12px] text-ink-3">AIF still to be called</div><div className="num font-medium">{formatINR(altCall)}</div></div>
+          </div>
+          <div className="card overflow-hidden mt-2">
+            {alts.map((x) => { const c = altCur(x), g = c - x.invested_paise; return (
+              <Link key={x.id} href={`/m/investments/${x.id}`} className="block px-4 py-3.5 border-b hairline last:border-0 active:bg-surface-2 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0"><div className="text-[15px] font-medium">{x.name}</div>
+                    <div className="text-[13px] text-ink-3">{altKind(x)}{x.institution ? ` · ${x.institution}` : ""} · {nameOf(x.entity_id)}</div></div>
+                  <div className="text-right shrink-0"><div className="num text-[15px] font-medium">{formatINR(c)}</div>
+                    <div className={`num text-[12px] ${g >= 0 ? "text-ok" : "text-danger"}`}>{g >= 0 ? "+" : "−"}{formatINR(Math.abs(g))}{x.invested_paise ? ` (${(Math.abs(g) / x.invested_paise * 100).toFixed(1)}%)` : ""}</div></div>
+                </div>
+                <div className="mt-1.5 flex justify-between text-[12px] text-ink-3 num">
+                  <span>Invested {formatINR(x.invested_paise)}</span>
+                  {altUndrawn(x) > 0 && <span>To be called {formatINR(altUndrawn(x))}</span>}
+                </div>
+              </Link>); })}
+          </div>
+        </>
+      )}
 
       <SectionTitle>Upcoming outflows</SectionTitle>
       <div className="card px-4 py-4 space-y-3">
