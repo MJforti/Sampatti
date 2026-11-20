@@ -52,7 +52,12 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
     supabase().from("form_drafts").select("data, updated_at").eq("form_key", formKey).maybeSingle().then(({ data }) => {
       if (!live || !data) return;
       const remote: Draft = { v: data.data as Rec, at: new Date(data.updated_at).getTime() };
-      if (remote.at > (local?.at ?? 0) && differs(remote.v, initial)) {
+      if (remote.at <= (local?.at ?? 0)) return;
+      if (remote.v?.[CLEARED]) { // cleared on another device after this copy was saved
+        try { localStorage.removeItem(draftKey!); } catch { /* ignore */ }
+        setVals(initial); setRestored(false); return;
+      }
+      if (differs(remote.v, initial)) {
         takeDraft(remote);
         try { localStorage.setItem(draftKey!, JSON.stringify(remote)); } catch { /* ignore */ }
       }
@@ -73,7 +78,8 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
   }, [vals]);
   const clearDraft = () => {
     try { if (draftKey) localStorage.removeItem(draftKey); } catch { /* ignore */ }
-    if (user) supabase().from("form_drafts").delete().eq("form_key", formKey).then(() => {});
+    // Leave a dated "cleared" marker so other devices drop their older copies too
+    if (user) supabase().from("form_drafts").upsert({ form_key: formKey, data: { [CLEARED]: true }, updated_at: new Date().toISOString() }).then(() => {});
   };
   const discardDraft = () => { clearDraft(); setVals(initial); setRestored(false); };
 
@@ -202,6 +208,7 @@ function FieldInput({ f, value, onChange, error, entities, banks, allBanks, vehi
 }
 
 type Draft = { v: Rec; at: number };
+const CLEARED = "__cleared";
 const differs = (a: Rec, b: Rec) => Object.keys(a).some((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k]));
 
 function readDraft(key: string | null, initial: Rec): Draft | null {
