@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { use, useState } from "react";
-import { ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, Pencil, Printer, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApp, friendlyError } from "@/components/providers";
 import { ProfileForm } from "@/components/profile-form";
@@ -68,6 +68,9 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
             <Row label="Insurance cover" value={<span className="num">{formatINR(q.data.s.insurance_cover)}</span>} />
             <Row label="Est. net worth" value={<span className="num font-semibold">{formatINR(q.data.s.net_worth_estimate)}</span>} />
           </div>
+          <Link href={`/reports/advisor?profile=${id}`} className="mt-3 flex items-center justify-center gap-2 h-12 px-4 rounded-2xl bg-accent text-accent-ink font-medium text-[15px]">
+            <Printer className="size-4" />Financial report (PDF)
+          </Link>
           <SectionTitle action={<Link href="/" onClick={() => setSelected(id)} className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Open dashboard</Link>}>Due in the next 60 days</SectionTitle>
           <EventList events={q.data.ev} empty="Nothing due." />
           <SectionTitle>Records</SectionTitle>
