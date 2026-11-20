@@ -18,9 +18,10 @@ export function Splash({ message, place, greeting }: { message?: string; place?:
     <div className="splash min-h-dvh grid place-items-center overflow-hidden" role="status" aria-label="Loading Sampatti">
       <div className="flex flex-col items-center">
         <svg viewBox="0 0 192 192" className="splash-tile size-20" aria-hidden>
-          <rect width="192" height="192" rx="44" fill="var(--accent)" />
-          <polyline className="splash-line" points="60,120 86,94 104,110 130,76" fill="none" stroke="#f4efe6" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" pathLength="1" />
-          <circle className="splash-dot" cx="130" cy="74" r="10" fill="#e3a23b" />
+          {/* Exact colours from the app icon, in both themes */}
+          <rect width="192" height="192" rx="44" fill="#1d5c4a" />
+          <polyline className="splash-line" points="60,120 86,94 104,110 130,76" fill="none" stroke="#f6f4ef" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" pathLength="1" />
+          <circle className="splash-dot" cx="130" cy="74" r="10" fill="#e3a440" />
         </svg>
         <div className="relative mt-6 w-[min(80vw,320px)]">
           <div className="splash-rule absolute left-1/2 top-full h-px w-[200vw] -translate-x-1/2 bg-[var(--accent)]" />
