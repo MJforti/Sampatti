@@ -299,3 +299,13 @@ select verify_admin_pin('4826');
 insert into families (name) values ('Gangwal Family');
 select pg_temp.act_as(null);
 select pg_temp.ok((select access_code ~ '^[A-Z0-9]{4}-[A-Z0-9]{4}$' from families where name = 'Gangwal Family'), 'ultra admin can create a family with a code');
+
+-- Projected outflows
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select verify_admin_pin('4826');
+insert into investments (entity_id, category, name, invested_paise, mode, sip_amount_paise, sip_frequency, next_sip_date)
+select id, 'mutual_fund', 'Test Flexi Cap', 0, 'sip', 500000, 'monthly', date_trunc('month', app_today())::date + 14 from family_entities where name = 'Vishesh Jain';
+select pg_temp.ok((select sum(amount_paise) = 6000000 and count(*) = 12 from projected_outflows(12) where category = 'sip'),
+  'monthly ₹5,000 SIP projects to ₹60,000 over 12 months');
+select pg_temp.ok(not exists (select 1 from projected_outflows(12) where category in ('fd_maturity','investment_maturity')), 'maturities are not counted as outflow');
+select pg_temp.act_as(null);

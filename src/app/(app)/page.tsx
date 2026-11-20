@@ -135,7 +135,7 @@ export default function Home() {
       )}
 
       {/* D. Overview */}
-      <SectionTitle action={<Link href="/reports" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Reports</Link>}>Financial overview</SectionTitle>
+      <SectionTitle action={<Link href="/outflow" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">12-month outflow</Link>}>Financial overview</SectionTitle>
       {summary.error ? <ErrorState error={summary.error} retry={summary.reload} /> : (
         summary.loading || !summary.data ? <ListSkeleton rows={2} /> : (
           <div className="card px-4">

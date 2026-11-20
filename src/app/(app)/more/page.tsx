@@ -12,6 +12,7 @@ const ITEMS = [
   ["/m/loans", "Loans & EMIs", "Outstanding loans and EMI schedule", Landmark],
   ["/m/vehicles", "Vehicles", "PUC, insurance, road tax, fitness", Car],
   ["/m/banks", "Bank accounts", "Accounts and linked auto-debits", Building2],
+  ["/outflow", "Cash outflow", "Money going out over the next 12 months, by profile", Wallet],
   ["/deductions", "Bank-wise deductions", "What leaves each account, next 7/15/30 days", Wallet],
   ["/m/obligations", "Recurring payments", "Rent, subscriptions, custom deadlines", Repeat],
   ["/m/tax", "Tax & compliance", "GST, TDS, ITR, advance tax, audits", Receipt],
