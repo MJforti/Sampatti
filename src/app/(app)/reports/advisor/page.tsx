@@ -14,7 +14,7 @@ import { OPEN_STATUSES, isInflow, CATEGORY_LABEL } from "@/lib/status";
 import { outflowGroup, outflowMonths, monthLabel, type OutflowRow } from "@/lib/outflow";
 import type { CalEvent } from "@/components/obligations";
 
-type Inv = { entity_id: string; category: string; name: string; invested_paise: number; current_value_paise: number | null; value_is_verified: boolean; value_as_of: string | null; maturity_date: string | null; maturity_amount_paise: number | null; mode: string | null; sip_amount_paise: number | null; next_sip_date: string | null };
+type Inv = { entity_id: string; category: string; name: string; institution: string | null; details: Record<string, any> | null; invested_paise: number; current_value_paise: number | null; value_is_verified: boolean; value_as_of: string | null; maturity_date: string | null; maturity_amount_paise: number | null; mode: string | null; sip_amount_paise: number | null; next_sip_date: string | null };
 type Loan = { entity_id: string; loan_type: string; lender: string; outstanding_paise: number; principal_paise: number; interest_rate: string; emi_paise: number; rate_type: string };
 type Pol = { entity_id: string; category: string; insurer: string; policy_name: string | null; sum_assured_paise: number | null; premium_paise: number | null; premium_frequency: string | null; expiry_date: string | null; next_premium_date: string | null; status: string };
 
@@ -90,6 +90,11 @@ function AdvisorReport() {
   const due30 = sumPaise(next30.map((e) => e.amount_paise));
   const maturing = inv.filter((i) => i.maturity_date && i.maturity_date >= today && daysBetween(today, i.maturity_date) <= 90);
   const expiring = activePols.filter((p) => p.expiry_date && p.expiry_date >= today && daysBetween(today, p.expiry_date) <= 60);
+  const alts = inv.filter((i) => i.category === "pms" || i.category === "aif");
+  const altValue = sumPaise(alts.map((i) => i.current_value_paise ?? i.invested_paise));
+  const aifs = alts.filter((i) => i.category === "aif");
+  const undrawn = sumPaise(aifs.map((i) => Math.max(0, Number(i.details?.aif_commitment_paise ?? 0) - Number(i.details?.aif_drawn_paise ?? 0))));
+  const aifCat = (c?: string) => ({ cat1: "Cat I", cat2: "Cat II", cat3: "Cat III" } as Record<string, string>)[c ?? ""] ?? "";
   const loansByRate = [...loans].filter((l) => l.outstanding_paise > 0).sort((a, b) => Number(b.interest_rate) - Number(a.interest_rate));
 
   // ---- Recommendations (rule-based, from the data only) -------------------------
@@ -109,6 +114,10 @@ function AdvisorReport() {
   const noHealth = members.filter((m) => m.entity_type === "individual" && !activePols.some((p) => p.category === "health" && p.entity_id === m.id));
   if (healthCover && noHealth.length) recs.push({ level: "Review", title: `Check health cover for ${noHealth.map((m) => m.name).join(", ")}`,
     body: "No health policy is recorded in their name. If they are covered under a family floater, note the covered members on that policy." });
+  if (undrawn > 0) recs.push({ level: "Plan", title: `Keep ${formatINR(undrawn)} ready for AIF capital calls`,
+    body: `${aifs.filter((i) => Number(i.details?.aif_commitment_paise ?? 0) > Number(i.details?.aif_drawn_paise ?? 0)).map((i) => `${i.name} (${name(i.entity_id)}): ${formatINR(Number(i.details?.aif_commitment_paise) - Number(i.details?.aif_drawn_paise ?? 0))} of ${formatINR(Number(i.details?.aif_commitment_paise))} not yet called`).join("; ")}. Funds call this capital at short notice; missing a drawdown can attract penalties or dilution, so keep it in liquid instruments rather than locked-in investments.` });
+  if (altValue > 0 && current > 0 && pct(altValue, current) >= 40) recs.push({ level: "Review", title: `${pct(altValue, current)}% of investments are in PMS and AIFs`,
+    body: "These are less liquid, carry higher fees (often with performance fees) and some AIFs have multi-year lock-ins. Make sure enough is held in liquid assets for emergencies and near-term goals, and compare each manager’s returns with its benchmark after fees." });
   if (top && current > 0 && pct(top[1], current) >= 60 && allocRows.length > 1) recs.push({ level: "Review", title: `${pct(top[1], current)}% of investments are in ${label(INVESTMENT_TYPES, top[0]).toLowerCase()}`,
     body: "Heavy concentration in one asset type raises risk. Review the mix against goals and time horizon." });
   if (maturing.length) recs.push({ level: "Plan", title: `Plan reinvestment for ${maturing.length} maturit${maturing.length > 1 ? "ies" : "y"} in the next 90 days`,
@@ -179,6 +188,27 @@ function AdvisorReport() {
             <p className="text-[13px] text-ink-3 mt-2">Invested {formatINR(invested)} · current {formatINR(current)} · {gain >= 0 ? "gain" : "loss"} {formatINR(Math.abs(gain))}{unverified.length ? ` · ${unverified.length} value${unverified.length > 1 ? "s are" : " is"} an estimate` : ""}. Monthly SIPs: {formatINR(sip)}.</p>
           </>
         ) : <p className="text-[14px] text-ink-2">No investments recorded.</p>}
+
+        {alts.length > 0 && (
+          <div className="mt-5">
+            <h3 className="text-[15px] font-medium mb-2">PMS and AIF holdings</h3>
+            <T head={["Holding", "Profile", "Invested", "Current", "Gain / loss"]} num={[2, 3, 4]}
+              rows={alts.map((i) => {
+                const cur = i.current_value_paise ?? i.invested_paise; const g = cur - i.invested_paise;
+                const kind = i.category === "pms" ? `PMS${i.details?.pms_strategy ? ", " + i.details.pms_strategy : ""}` : `AIF ${aifCat(i.details?.aif_category)}${i.details?.aif_strategy ? ", " + i.details.aif_strategy : ""}`;
+                return [`${i.name} (${kind.trim()})${i.institution ? ` · ${i.institution}` : ""}`, name(i.entity_id), formatINR(i.invested_paise), formatINR(cur),
+                  `${g >= 0 ? "+" : "−"}${formatINR(Math.abs(g))}${i.invested_paise ? ` (${(g / i.invested_paise * 100).toFixed(1)}%)` : ""}`];
+              })} />
+            {aifs.some((i) => i.details?.aif_commitment_paise) && (
+              <div className="mt-3"><T head={["AIF", "Committed", "Drawn", "Still to be called"]} num={[1, 2, 3]}
+                rows={aifs.filter((i) => i.details?.aif_commitment_paise).map((i) => {
+                  const c = Number(i.details!.aif_commitment_paise), d = Number(i.details!.aif_drawn_paise ?? 0);
+                  return [i.name, formatINR(c), `${formatINR(d)} (${pct(d, c)}%)`, formatINR(Math.max(0, c - d))];
+                })} /></div>
+            )}
+            <p className="text-[13px] text-ink-3 mt-2">PMS and AIFs make up {pct(altValue, current)}% of investments ({formatINR(altValue)}).{alts.some((i) => i.details?.pms_benchmark) ? ` Benchmarks: ${alts.filter((i) => i.details?.pms_benchmark).map((i) => `${i.name} vs ${i.details!.pms_benchmark}`).join("; ")}.` : ""}</p>
+          </div>
+        )}
 
         <H n={5}>Loans</H>
         {loansByRate.length ? (
