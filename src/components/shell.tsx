@@ -18,7 +18,7 @@ const TABS = [
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { user, loading, isAdminMode, admin, lockAdmin, unread } = useApp();
+  const { user, profile, loading, isAdminMode, admin, lockAdmin, unread } = useApp();
   const path = usePathname();
   const router = useRouter();
 
@@ -29,7 +29,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const intro = useIntro("app");
 
   if (loading || !user || intro) {
-    return <Splash place="app" />;
+    const first = profile?.full_name?.trim().split(/\s+/)[0];
+    return <Splash place="app" greeting={first ? `Welcome back, ${first}` : undefined} />;
   }
 
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));

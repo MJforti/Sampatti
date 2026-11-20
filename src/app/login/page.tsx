@@ -29,8 +29,16 @@ export default function Login() {
       const { error } = await sb.rpc("sign_up", { p_email: email, p_password: password, p_full_name: name || null });
       if (error) { setMsg(error.message); setBusy(false); return; }
     }
-    const { error } = await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
-    if (!error) replayIntroOnAppOpen(mode === "signup" ? "Sign up successful. Welcome to Sampatti" : "Signed in successfully");
+    const { data: auth, error } = await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (!error) {
+      // Greet by first name when we have one
+      let who = name.trim();
+      if (!who && auth.user) who = (await sb.from("user_profiles").select("full_name").eq("id", auth.user.id).maybeSingle()).data?.full_name?.trim() ?? "";
+      const first = who.split(/\s+/)[0];
+      replayIntroOnAppOpen(mode === "signup"
+        ? (first ? `Sign up successful. Welcome to Sampatti, ${first}` : "Sign up successful. Welcome to Sampatti")
+        : (first ? `Welcome back, ${first}` : "Signed in successfully. Welcome back"));
+    }
     if (error) { setMsg(error.message === "Invalid login credentials" ? "Email or password is incorrect" : error.message); setBusy(false); return; }
     if (mode === "signup" && code.trim()) {
       const j = await sb.rpc("join_family", { p_code: code });

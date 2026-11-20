@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 
 // Loading screen: the logo's line draws itself, a ledger rule runs across, and the name writes in.
-export function Splash({ message, place }: { message?: string; place?: "login" | "app" }) {
+export function Splash({ message, place, greeting }: { message?: string; place?: "login" | "app"; greeting?: string }) {
   // A message left by the previous screen (e.g. "Logged out") for this place
   const [stored, setStored] = useState<string | null>(null);
   useEffect(() => {
@@ -12,7 +12,8 @@ export function Splash({ message, place }: { message?: string; place?: "login" |
       if (m?.place === place) { setStored(m.text); sessionStorage.removeItem(MSG_KEY); }
     } catch { /* ignore */ }
   }, [place]);
-  const note = message ?? stored;
+  const note = message ?? stored ?? greeting;
+  const tick = !message && !!stored;
   return (
     <div className="splash min-h-dvh grid place-items-center overflow-hidden" role="status" aria-label="Loading Sampatti">
       <div className="flex flex-col items-center">
@@ -30,7 +31,7 @@ export function Splash({ message, place }: { message?: string; place?: "login" |
         <p className="splash-tag mt-3 text-sm text-ink-3">Every rupee, in its place.</p>
         {note && (
           <p className="splash-note mt-6 inline-flex items-center gap-2 rounded-full bg-accent-soft text-accent px-4 h-9 text-sm font-medium" aria-live="polite">
-            {!message && <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+            {tick && <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
             {note}
           </p>
         )}
