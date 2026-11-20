@@ -41,7 +41,7 @@ export function useIntro(place: "login" | "app") {
   return intro;
 }
 
-/** A new account just signed up: play the splash as the app opens for the first time. */
+/** Someone just signed in or created an account: play the splash as the app opens. */
 export function replayIntroOnAppOpen() {
   try { sessionStorage.removeItem("sampatti.intro.app"); } catch { /* ignore */ }
 }
