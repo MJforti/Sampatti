@@ -8,7 +8,7 @@ import { unwrap, useQuery } from "@/lib/use-query";
 type U = { id: string; email: string; full_name: string | null; role: string; is_active: boolean; linked_entity_id?: string | null };
 type P = { id: string; user_id: string; entity_id: string; categories: string[] | null; can_view_documents: boolean; receive_notifications: boolean };
 const ROLES = [["admin", "Ultra admin"], ["family_member", "Family member"], ["accountant", "Accountant"], ["read_only", "Read-only"]];
-const MODS = [["investments", "Investments"], ["insurance", "Insurance"], ["loans", "Loans"], ["vehicles", "Vehicles"], ["banks", "Banks"], ["tax", "Tax"], ["obligations", "Payments"], ["documents", "Documents"]];
+const MODS = [["investments", "Investments"], ["insurance", "Insurance"], ["loans", "Loans"], ["vehicles", "Vehicles"], ["banks", "Banks"], ["obligations", "Payments"], ["documents", "Documents"]];
 
 export default function Users() {
   const { isUltra: isAdminMode, entities, families, toast, user: me, reloadRefs } = useApp();

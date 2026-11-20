@@ -7,13 +7,13 @@ import { useApp } from "@/components/providers";
 import { ProfileSelect } from "@/components/profile-select";
 import { RecordForm } from "@/components/record-form";
 import { Button, Chip, Empty, ErrorState, ListSkeleton, PageHeader, Badge } from "@/components/ui";
-import { MODULES, INVESTMENT_TYPES, INSURANCE_TYPES, LOAN_TYPES, TAX_TYPES, label } from "@/lib/modules";
+import { MODULES, INVESTMENT_TYPES, INSURANCE_TYPES, LOAN_TYPES, label } from "@/lib/modules";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
 import { formatINR, sumPaise } from "@/lib/money";
 import { daysBetween, formatDate, todayISO } from "@/lib/dates";
 
-const TYPE_OPTS: Record<string, [string, string][]> = { investments: INVESTMENT_TYPES, insurance: INSURANCE_TYPES, loans: LOAN_TYPES, tax: TAX_TYPES };
+const TYPE_OPTS: Record<string, [string, string][]> = { investments: INVESTMENT_TYPES, insurance: INSURANCE_TYPES, loans: LOAN_TYPES };
 
 export default function Page({ params }: { params: Promise<{ module: string }> }) {
   const { module } = use(params);
@@ -82,7 +82,6 @@ function ModuleList({ moduleKey }: { moduleKey: string }) {
                   <div className="min-w-0 flex-1">
                     <div className="text-[15px] font-medium truncate">{mod.primary(r)}</div>
                     <div className="text-[13px] text-ink-3 truncate">{!selected && `${entityName(r.entity_id)} · `}{mod.secondary(r)}</div>
-                    {moduleKey === "tax" && r.source && <div className="text-[11px] text-ink-3">Source: {r.source}{r.last_verified_on ? ` · verified ${formatDate(r.last_verified_on, "short")}` : ""}</div>}
                   </div>
                   <div className="text-right shrink-0">
                     {amt != null && <div className="num text-[15px] font-semibold">{formatINR(amt)}</div>}

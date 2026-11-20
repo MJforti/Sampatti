@@ -90,7 +90,6 @@ function AdvisorReport() {
   const due30 = sumPaise(next30.map((e) => e.amount_paise));
   const maturing = inv.filter((i) => i.maturity_date && i.maturity_date >= today && daysBetween(today, i.maturity_date) <= 90);
   const expiring = activePols.filter((p) => p.expiry_date && p.expiry_date >= today && daysBetween(today, p.expiry_date) <= 60);
-  const compliance = ev.filter((e) => e.category.startsWith("tax") || e.category === "compliance_other");
   const loansByRate = [...loans].filter((l) => l.outstanding_paise > 0).sort((a, b) => Number(b.interest_rate) - Number(a.interest_rate));
 
   // ---- Recommendations (rule-based, from the data only) -------------------------
@@ -118,8 +117,6 @@ function AdvisorReport() {
     body: `Committed outflow that month is ${formatINR(peak.v)}, against a monthly average of ${formatINR(avg)}. Keep the difference in the linked accounts beforehand so auto-debits don’t bounce.` });
   if (unverified.length) recs.push({ level: "Review", title: `Update ${unverified.length} investment value${unverified.length > 1 ? "s" : ""} from statements`,
     body: "These values are manual estimates, so net worth here is approximate. Updating them from the latest statements makes this report reliable." });
-  if (compliance.length) recs.push({ level: "Plan", title: `${compliance.length} tax and compliance deadline${compliance.length > 1 ? "s" : ""} in the next 90 days`,
-    body: compliance.slice(0, 4).map((e) => `${CATEGORY_LABEL[e.category] ?? "Compliance"} for ${e.entity_name} by ${formatDate(e.event_date, "short")}`).join("; ") + ". Verify dates against the official source, as they can be extended." });
   if (!sip && current > 0) recs.push({ level: "Review", title: "No active SIPs",
     body: "Regular monthly investing (SIPs) builds wealth steadily and averages out market ups and downs. Consider whether ongoing investing fits current goals." });
   const order = { "Act now": 0, Plan: 1, Review: 2 } as const;

@@ -5,7 +5,7 @@ export const DOC_CATEGORIES: [string, string][] = [
   ["insurance_policy", "Insurance policy"], ["mf_statement", "Mutual fund statement"], ["investment_statement", "Investment statement"],
   ["fd_certificate", "FD certificate"], ["loan_agreement", "Loan agreement"], ["loan_statement", "Loan statement"],
   ["vehicle_rc", "Vehicle RC"], ["puc", "PUC certificate"], ["vehicle_insurance", "Vehicle insurance"],
-  ["tax_challan", "Tax challan"], ["receipt", "Payment receipt"], ["other", "Other"],
+  ["receipt", "Payment receipt"], ["other", "Other"],
 ];
 export const ACCEPT = "application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,.xlsx,.xls,.doc,.docx,.csv";
 const MAX = 20 * 1024 * 1024;

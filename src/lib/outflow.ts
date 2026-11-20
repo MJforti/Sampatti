@@ -7,7 +7,6 @@ export const OUTFLOW_GROUPS: [string, string, (c: string) => boolean][] = [
   ["invest", "SIPs & recurring deposits", (c) => c === "sip" || c === "recurring_deposit"],
   ["loan", "Loan EMIs", (c) => c === "loan_emi"],
   ["insurance", "Insurance premiums", (c) => c.startsWith("insurance")],
-  ["tax", "Tax & compliance", (c) => c.startsWith("tax") || c === "compliance_other"],
   ["vehicle", "Vehicle costs", (c) => c.startsWith("vehicle")],
   ["other", "Other payments", () => true],
 ];

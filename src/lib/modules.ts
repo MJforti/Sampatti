@@ -116,13 +116,6 @@ export const MODULES: Record<string, ModuleDef> = {
     primary: (r) => r.nickname || r.bank_name, secondary: (r) => `${label(ACCOUNT_TYPES, r.account_type)}${r.account_last4 ? " · ••" + r.account_last4 : ""}${r.branch ? " · " + r.branch : ""}`,
     fields: [],
   },
-  tax: {
-    key: "tax", table: "tax_compliance", title: "Tax & compliance", singular: "Compliance item", icon: "Receipt",
-    permission: "tax", orderBy: "due_date",
-    primary: (r) => r.title, secondary: (r) => [label(TAX_TYPES, r.compliance_type), r.period_label].filter(Boolean).join(" · "),
-    amountKey: "amount_paise", dateKey: "due_date", dateLabel: "Due", typeKey: "compliance_type",
-    fields: [],
-  },
   obligations: {
     key: "obligations", table: "recurring_obligations", title: "Recurring payments", singular: "Recurring payment", icon: "Repeat",
     permission: "obligations", orderBy: "next_due_date",
@@ -136,7 +129,7 @@ export const INSURANCE_TYPES = opt("life:Life", "term:Term", "health:Health", "v
 export const LOAN_TYPES = opt("home:Home loan", "car:Car loan", "personal:Personal loan", "business:Business loan", "term:Term loan", "lap:Loan against property", "las:Loan against securities", "other:Other loan");
 export const ACCOUNT_TYPES = opt("savings:Savings", "current:Current", "overdraft:Overdraft", "cash_credit:Cash credit", "nre:NRE", "nro:NRO", "other:Other");
 export const TAX_TYPES = opt("tax_gst:GST return", "tax_tds_return:TDS return", "tax_tds_payment:TDS payment", "tax_itr:Income tax return", "tax_advance:Advance tax", "tax_audit:Tax audit", "compliance_other:Other compliance");
-export const OBLIGATION_CATEGORIES = opt("recurring_payment:Recurring payment", "custom:Custom deadline", "interest_receipt:Interest / dividend receipt", "compliance_other:Compliance", "insurance_premium:Insurance premium", "sip:SIP", "loan_emi:EMI", "recurring_deposit:Recurring deposit");
+export const OBLIGATION_CATEGORIES = opt("recurring_payment:Recurring payment", "custom:Custom deadline", "interest_receipt:Interest / dividend receipt", "insurance_premium:Insurance premium", "sip:SIP", "loan_emi:EMI", "recurring_deposit:Recurring deposit");
 const isHealth = (v: Record<string, unknown>) => v.category === "health";
 
 MODULES.insurance.fields = [
@@ -227,18 +220,6 @@ MODULES.banks.fields = [
   { key: "notes", label: "Notes", type: "textarea" },
 ];
 
-MODULES.tax.fields = [
-  { key: "entity_id", label: "Individual / entity", type: "entity", required: true },
-  { key: "compliance_type", label: "Type", type: "select", options: TAX_TYPES, required: true },
-  { key: "title", label: "Title", type: "text", required: true, placeholder: "e.g. GSTR-3B" },
-  { key: "period_label", label: "Period", type: "text", placeholder: "e.g. Nov 2026 / Q3 FY26-27" },
-  { key: "due_date", label: "Due date", type: "date", required: true },
-  { key: "amount_paise", label: "Amount (if payable)", type: "money" },
-  { key: "frequency", label: "Repeats", type: "frequency" },
-  { key: "source", label: "Deadline source", type: "text", placeholder: "e.g. CBDT notification / GST portal", help: "Official deadlines can be extended, so record where this date came from" },
-  { key: "last_verified_on", label: "Last verified on", type: "date" },
-  { key: "notes", label: "Notes", type: "textarea" },
-];
 
 MODULES.obligations.fields = [
   { key: "entity_id", label: "Responsible individual / entity", type: "entity", required: true },
@@ -258,4 +239,4 @@ export function label(options: [string, string][], value: unknown): string {
   return options.find(([v]) => v === value)?.[1] ?? (value ? String(value) : "");
 }
 
-export const MODULE_LIST = ["investments", "insurance", "loans", "vehicles", "banks", "tax", "obligations"];
+export const MODULE_LIST = ["investments", "insurance", "loans", "vehicles", "banks", "obligations"];

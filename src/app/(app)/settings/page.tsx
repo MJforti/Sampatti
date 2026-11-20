@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase/client";
 import { ThemePicker } from "@/components/theme";
 import { MemberAvatar, EmojiPicker } from "@/components/member-emoji";
 
-const MUTABLE = [["insurance", "Insurance"], ["investments", "Investments & SIPs"], ["loans", "Loans & EMIs"], ["vehicles", "Vehicles"], ["tax", "Tax & compliance"], ["documents", "Document expiry"], ["obligations", "Other payments"]];
+const MUTABLE = [["insurance", "Insurance"], ["investments", "Investments & SIPs"], ["loans", "Loans & EMIs"], ["vehicles", "Vehicles"], ["documents", "Document expiry"], ["obligations", "Other payments"]];
 
 export default function Settings() {
   const { user, profile, toast, isAdminMode, isUltra, admin, settings, reloadRefs, refreshUnread } = useApp();

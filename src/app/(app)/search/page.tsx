@@ -11,7 +11,7 @@ type Hit = { href: string; title: string; sub: string };
 const SEARCH_COLS: Record<string, string[]> = {
   investments: ["name", "institution", "reference_number"], insurance: ["insurer", "policy_name", "policy_number"],
   loans: ["lender"], vehicles: ["registration_number", "make_model"], banks: ["bank_name", "nickname", "branch"],
-  tax: ["title", "period_label"], obligations: ["title"],
+  obligations: ["title"],
 };
 
 export default function Search() {

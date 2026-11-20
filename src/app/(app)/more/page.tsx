@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { TrendingUp, ShieldCheck, Landmark, Car, Building2, FileText, Receipt, BarChart3, Settings, Repeat, ChevronRight, Wallet, UserCog, ScrollText, Search } from "lucide-react";
+import { TrendingUp, ShieldCheck, Landmark, Car, Building2, FileText, BarChart3, Settings, Repeat, ChevronRight, Wallet, UserCog, ScrollText, Search } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { AdminToggle } from "@/components/shell";
 import { LogoutButton } from "@/components/logout";
@@ -15,7 +15,6 @@ const ITEMS = [
   ["/outflow", "Cash outflow", "Money going out over the next 12 months, by profile", Wallet],
   ["/deductions", "Bank-wise deductions", "What leaves each account, next 7/15/30 days", Wallet],
   ["/m/obligations", "Recurring payments", "Rent, subscriptions, custom deadlines", Repeat],
-  ["/m/tax", "Tax & compliance", "GST, TDS, ITR, advance tax, audits", Receipt],
   ["/documents", "Documents", "Policies, statements, certificates", FileText],
   ["/reports", "Reports", "Assets, liabilities and outflows", BarChart3],
   ["/search", "Search", "Find any record", Search],

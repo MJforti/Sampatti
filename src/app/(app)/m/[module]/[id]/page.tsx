@@ -14,7 +14,7 @@ import { formatINR } from "@/lib/money";
 import { formatDate, todayISO } from "@/lib/dates";
 import { amortise } from "@/lib/loan";
 
-const DOC_CAT: Record<string, string> = { insurance: "insurance_policy", loans: "loan_statement", vehicles: "vehicle_rc", investments: "investment_statement", tax: "tax_challan" };
+const DOC_CAT: Record<string, string> = { insurance: "insurance_policy", loans: "loan_statement", vehicles: "vehicle_rc", investments: "investment_statement" };
 
 export default function Detail({ params }: { params: Promise<{ module: string; id: string }> }) {
   const { module, id } = use(params);
@@ -150,7 +150,6 @@ export default function Detail({ params }: { params: Promise<{ module: string; i
         if (!rows.length) return null;
         return <div key={g.title}><SectionTitle>{g.title}</SectionTitle><div className="card px-4">{rows.map(([f, v]) => <Row key={f.key} label={f.label} value={v} />)}</div></div>;
       })}
-      {module === "tax" && <p className="mt-2 px-1 text-xs text-ink-3">Statutory dates can change. Always re-verify against the official source before filing.</p>}
 
       {mod.table !== "recurring_obligations" && mod.table !== "bank_accounts" && (
         <><SectionTitle>Documents</SectionTitle><RecordDocs entityId={r.entity_id} recordType={mod.table} recordId={r.id} category={DOC_CAT[module]} /></>

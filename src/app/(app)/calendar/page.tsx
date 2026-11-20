@@ -13,7 +13,7 @@ import { addDays, formatDate, monthMatrix, todayISO } from "@/lib/dates";
 import { categoryGroup, STATUS_META, type TxnStatus } from "@/lib/status";
 import { Suspense } from "react";
 
-const GROUPS = [["all", "All"], ["insurance", "Insurance"], ["loan", "EMIs"], ["invest", "Investments"], ["vehicle", "Vehicles"], ["tax", "Tax"], ["other", "Other"]] as const;
+const GROUPS = [["all", "All"], ["insurance", "Insurance"], ["loan", "EMIs"], ["invest", "Investments"], ["vehicle", "Vehicles"], ["other", "Other"]] as const;
 const STATUS_FILTERS = [["open", "Open"], ["paid", "Paid"], ["all", "All"]] as const;
 
 export default function CalendarPage() { return <Suspense><Calendar /></Suspense>; }
