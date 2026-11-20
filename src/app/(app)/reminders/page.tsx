@@ -14,7 +14,7 @@ import { OPEN_STATUSES } from "@/lib/status";
 type Notif = { id: string; title: string; body: string; data: { url?: string }; read_at: string | null; created_at: string };
 
 export default function Reminders() {
-  const { user, tz, selected, refreshUnread, toast, isUltra } = useApp();
+  const { user, tz, selected, refreshUnread, toast, isUltra, showsCategory } = useApp();
   const [tab, setTab] = useState<"inbox" | "open">("inbox");
   const today = todayISO(tz);
 
@@ -44,8 +44,8 @@ export default function Reminders() {
   };
 
   const unreadIds = (notifs.data ?? []).filter((n) => !n.read_at).map((n) => n.id);
-  const overdue = (open.data ?? []).filter((e) => e.event_date < today);
-  const rest = (open.data ?? []).filter((e) => e.event_date >= today);
+  const overdue = (open.data ?? []).filter((e) => e.event_date < today && showsCategory(e.category));
+  const rest = (open.data ?? []).filter((e) => e.event_date >= today && showsCategory(e.category));
 
   return (
     <div>

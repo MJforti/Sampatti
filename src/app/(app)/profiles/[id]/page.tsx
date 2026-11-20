@@ -18,7 +18,7 @@ import { OPEN_STATUSES } from "@/lib/status";
 
 export default function ProfileDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { entities, isAdminMode, tz, setSelected, selected, toast, reloadRefs, profile, canEdit } = useApp();
+  const { entities, isAdminMode, tz, setSelected, selected, toast, reloadRefs, profile, canEdit, showsModule } = useApp();
   const [picking, setPicking] = useState(false);
   const router = useRouter();
   const [removing, setRemoving] = useState(false);
@@ -66,11 +66,11 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
         <>
           <div className="card px-4">
             <Row label="Investments (current)" value={<span className="num">{formatINR(q.data.s.current_value)}</span>} />
-            <Row label="Loans outstanding" value={<span className="num">{formatINR(q.data.s.loans_outstanding)}</span>} />
-            <Row label="Monthly EMIs" value={<span className="num">{formatINR(q.data.s.monthly_emi)}</span>} />
+            {showsModule("loans") && <Row label="Loans outstanding" value={<span className="num">{formatINR(q.data.s.loans_outstanding)}</span>} />}
+            {showsModule("loans") && <Row label="Monthly EMIs" value={<span className="num">{formatINR(q.data.s.monthly_emi)}</span>} />}
             <Row label="Monthly SIPs" value={<span className="num">{formatINR(q.data.s.monthly_sip)}</span>} />
-            <Row label="Insurance cover" value={<span className="num">{formatINR(q.data.s.insurance_cover)}</span>} />
-            <Row label="Est. net worth" value={<span className="num font-semibold">{formatINR(q.data.s.net_worth_estimate)}</span>} />
+            {showsModule("insurance") && <Row label="Insurance cover" value={<span className="num">{formatINR(q.data.s.insurance_cover)}</span>} />}
+            {showsModule("loans") && <Row label="Est. net worth" value={<span className="num font-semibold">{formatINR(q.data.s.net_worth_estimate)}</span>} />}
           </div>
           <Link href={`/reports/advisor?profile=${id}`} className="mt-3 flex items-center justify-center gap-2 h-12 px-4 rounded-2xl bg-accent text-accent-ink font-medium text-[15px]">
             <Printer className="size-4" />Financial report (PDF)
@@ -120,7 +120,7 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
 
           <SectionTitle>Records</SectionTitle>
           <div className="card overflow-hidden">
-            {MODULE_LIST.map((m, i) => (
+            {MODULE_LIST.map((m, i) => showsModule(m) && (
               <Link key={m} href={`/m/${m}`} onClick={() => setSelected(id)} className="flex items-center justify-between px-4 py-3.5 border-b hairline last:border-0 active:bg-surface-2">
                 <span>{MODULES[m].title}</span><span className="flex items-center gap-2 text-ink-3 num">{q.data!.counts[i]}<ChevronRight className="size-4" /></span>
               </Link>
@@ -152,7 +152,7 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
           }}>Remove permanently</Button>}>
         <div className="space-y-4 text-[15px]">
           <p className="text-ink-2">This permanently deletes <span className="text-ink font-medium">{e.name}</span> and everything that belongs to it:</p>
-          {q.data && <ul className="card px-4 py-2 text-sm">{MODULE_LIST.map((m, i) => q.data!.counts[i] > 0 && (
+          {q.data && <ul className="card px-4 py-2 text-sm">{MODULE_LIST.map((m, i) => showsModule(m) && q.data!.counts[i] > 0 && (
             <li key={m} className="flex justify-between py-1.5"><span className="text-ink-2">{MODULES[m].title}</span><span className="num">{q.data!.counts[i]}</span></li>))}
             <li className="flex justify-between py-1.5"><span className="text-ink-2">Documents, payments and reminders</span><span>all</span></li></ul>}
           <p className="text-sm text-ink-3">This can’t be undone. To keep the history, edit the profile and switch off <span className="text-ink-2">Active</span> instead.</p>

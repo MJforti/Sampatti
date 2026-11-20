@@ -106,6 +106,11 @@ select pg_temp.ok((select premium_paise = 4500000 from insurance_policies), 'mem
 -- ---- Reminder engine -------------------------------------------------------
 select pg_temp.ok((select bool_and(not email) from notification_preferences), 'email notifications off by default');
 update notification_preferences set email = true; -- exercise the delivery pipeline
+select pg_temp.ok((select bool_and(hidden_modules = '{loans,insurance}') from user_profiles), 'loans and insurance hidden by default');
+-- Hidden modules send no reminders
+select pg_temp.ok(generate_reminders(app_today()) = 2 and (select count(*) = 0 from notifications), 'no reminders for hidden loans/insurance');
+delete from reminders;
+update user_profiles set hidden_modules = '{}'; -- turn them on for the rest of the engine tests
 select pg_temp.ok(generate_reminders(app_today()) = 2, 'first run fires reminders for premium (7d) and overdue EMI');
 select pg_temp.ok(generate_reminders(app_today()) = 0, 'second run same day is idempotent');
 select pg_temp.ok((select count(*) = 3 from notifications), 'admin gets 2, member gets only permitted insurance reminder');

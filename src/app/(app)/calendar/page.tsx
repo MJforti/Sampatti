@@ -19,7 +19,7 @@ const STATUS_FILTERS = [["open", "Open"], ["paid", "Paid"], ["all", "All"]] as c
 export default function CalendarPage() { return <Suspense><Calendar /></Suspense>; }
 
 function Calendar() {
-  const { tz, selected } = useApp();
+  const { tz, selected, showsCategory, showsModule } = useApp();
   const params = useSearchParams();
   const today = todayISO(tz);
   const [view, setView] = useState<"month" | "week" | "list">((params.get("view") as "list") ?? "month");
@@ -40,7 +40,7 @@ function Calendar() {
     return unwrap(await q) as CalEvent[];
   }, [from, to, selected, view]);
 
-  const filtered = (ev.data ?? []).filter((e) =>
+  const filtered = (ev.data ?? []).filter((e) => showsCategory(e.category) &&
     (group === "all" || categoryGroup(e.category) === group) &&
     (status === "all" || (status === "paid" ? ["paid", "renewed"].includes(e.status) : !["paid", "renewed", "cancelled"].includes(e.status))) &&
     (view !== "list" || e.event_date >= today || !["paid", "renewed", "cancelled"].includes(e.status)));
@@ -68,7 +68,7 @@ function Calendar() {
       <ProfileSelect />
       <div className="flex gap-2 py-2">
         <select aria-label="Category" className="field !min-h-10 !py-2 flex-1" value={group} onChange={(e) => setGroup(e.target.value)}>
-          {GROUPS.map(([k, l]) => <option key={k} value={k}>{k === "all" ? "All categories" : l}</option>)}
+          {GROUPS.filter(([k]) => !(k === "insurance" && !showsModule("insurance")) && !(k === "loan" && !showsModule("loans"))).map(([k, l]) => <option key={k} value={k}>{k === "all" ? "All categories" : l}</option>)}
         </select>
         <select aria-label="Status" className="field !min-h-10 !py-2 w-32" value={status} onChange={(e) => setStatus(e.target.value)}>
           {STATUS_FILTERS.map(([k, l]) => <option key={k} value={k}>{k === "all" ? "Any status" : l}</option>)}
@@ -135,7 +135,7 @@ function Calendar() {
         </div>
       ))}
       <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-3">
-        {GROUPS.slice(1).map(([k, l]) => <span key={k} className="inline-flex items-center gap-1"><span className="size-2 rounded-full" style={{ background: `var(--c-${k})` }} />{l}</span>)}
+        {GROUPS.slice(1).filter(([k]) => !(k === "insurance" && !showsModule("insurance")) && !(k === "loan" && !showsModule("loans"))).map(([k, l]) => <span key={k} className="inline-flex items-center gap-1"><span className="size-2 rounded-full" style={{ background: `var(--c-${k})` }} />{l}</span>)}
       </div>
       <p className="mt-3 text-[11px] text-ink-3">Scheduled items are never marked paid automatically. Auto-debits show “{STATUS_META.awaiting_confirmation.label}” after the date until confirmed.</p>
     </div>

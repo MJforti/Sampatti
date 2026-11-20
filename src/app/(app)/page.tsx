@@ -17,7 +17,7 @@ import { OPEN_STATUSES, isInflow } from "@/lib/status";
 type Summary = Record<string, number | boolean | string>;
 
 export default function Home() {
-  const { profile, selected, tz, unread, entityName, isAdminMode, entities } = useApp();
+  const { profile, selected, tz, unread, entityName, isAdminMode, entities, showsModule, showsCategory } = useApp();
   const selEntity = entities.find((x) => x.id === selected);
   const today = todayISO(tz);
   const [range, setRange] = useState<7 | 15 | 30 | "custom">(7);
@@ -49,7 +49,7 @@ export default function Home() {
     return { count: rows.length, invested, current, undrawn };
   }, [selected]);
 
-  const all = events.data ?? [];
+  const all = (events.data ?? []).filter((e) => showsCategory(e.category));
   const urgent = all.filter((e) => daysBetween(today, e.event_date) <= 3);
   const [from, to] = range === "custom" ? [custom.from, custom.to] : [today, addDays(today, range)];
   const inRange = all.filter((e) => e.event_date >= from && e.event_date <= to);
@@ -156,11 +156,11 @@ export default function Home() {
                 note={alts.data.invested ? `${alts.data.current >= alts.data.invested ? "+" : "−"}${(Math.abs(alts.data.current - alts.data.invested) / alts.data.invested * 100).toFixed(1)}% on ${formatINRCompact(alts.data.invested)}` : undefined} />
             )}
             {alts.data && alts.data.undrawn > 0 && <Line label="AIF still to be called" value={alts.data.undrawn} note="keep ready" />}
-            <Line label="Loans outstanding" value={summary.data.loans_outstanding as number} />
-            <Line label="EMIs per month" value={summary.data.monthly_emi as number} />
+            {showsModule("loans") && <Line label="Loans outstanding" value={summary.data.loans_outstanding as number} />}
+            {showsModule("loans") && <Line label="EMIs per month" value={summary.data.monthly_emi as number} />}
             <Line label="SIPs per month" value={summary.data.monthly_sip as number} />
-            <Line label="Insurance cover" value={summary.data.insurance_cover as number} />
-            <Line label="Estimated net worth" value={summary.data.net_worth_estimate as number} note="investments − loans" strong />
+            {showsModule("insurance") && <Line label="Insurance cover" value={summary.data.insurance_cover as number} />}
+            {showsModule("loans") && <Line label="Estimated net worth" value={summary.data.net_worth_estimate as number} note="investments − loans" strong />}
           </div>
         )
       )}

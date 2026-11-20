@@ -8,7 +8,7 @@ export type Family = { id: string; name: string; is_active: boolean; access_code
 export type Entity = { id: string; family_id?: string | null; emoji?: string | null; name: string; entity_type: string; is_active: boolean; email?: string | null; phone?: string | null; notes?: string | null; pan_masked?: string | null; sort_order: number };
 export type Bank = { id: string; entity_id: string; bank_name: string; account_last4: string | null; nickname: string | null };
 export type Vehicle = { id: string; entity_id: string; registration_number: string };
-export type UserProfile = { id: string; email: string; full_name: string | null; role: "admin" | "family_member" | "accountant" | "read_only"; is_active: boolean; linked_entity_id?: string | null; theme?: "system" | "light" | "dark" };
+export type UserProfile = { id: string; email: string; full_name: string | null; role: "admin" | "family_member" | "accountant" | "read_only"; is_active: boolean; linked_entity_id?: string | null; theme?: "system" | "light" | "dark"; hidden_modules?: string[] };
 export type AdminStatus = {
   is_admin: boolean; is_ultra?: boolean; family_id?: string | null; family_name?: string | null; pin_configured: boolean; can_bootstrap: boolean; unlocked: boolean;
   expires_at: string | null; session_minutes: number; locked_until: string | null; attempts_left: number;
@@ -42,6 +42,11 @@ type Ctx = {
   lockAdmin: () => Promise<void>;
   pinOpen: boolean;
   setPinOpen: (v: boolean) => void;
+  // modules the person has switched off (loans, insurance)
+  hiddenModules: string[];
+  showsModule: (m: string) => boolean;
+  showsCategory: (category: string) => boolean;
+  setHiddenModules: (m: string[]) => void;
   // toast
   toast: (msg: string, tone?: "ok" | "error") => void;
   unread: number;
@@ -164,6 +169,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     try { id ? localStorage.setItem(SELECTED_KEY, id) : localStorage.removeItem(SELECTED_KEY); } catch { /* ignore */ }
   }, []);
 
+  const hiddenModules = useMemo(() => profile?.hidden_modules ?? ["loans", "insurance"], [profile]);
+  const setHiddenModules = useCallback((m: string[]) => setProfile((p) => (p ? { ...p, hidden_modules: m } : p)), []);
+
   const value = useMemo<Ctx>(() => ({
     user, profile, loading, entities, families, banks, vehicles, settings, tz: settings?.timezone ?? DEFAULT_TZ, reloadRefs,
     entityName: (id) => entities.find((e) => e.id === id)?.name ?? "Unknown",
@@ -177,7 +185,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     canEdit: (id) => isAdminMode && (!!admin?.is_ultra || (!!id && entities.find((e) => e.id === id)?.family_id === admin?.family_id)),
     adminEntities: !isAdminMode ? [] : admin?.is_ultra ? entities : entities.filter((e) => e.family_id === admin?.family_id),
     refreshAdmin, setAdmin, lockAdmin, pinOpen, setPinOpen, toast, unread, refreshUnread,
-  }), [user, profile, loading, entities, families, banks, vehicles, settings, reloadRefs, selected, setSelected, admin, isAdminMode, refreshAdmin, lockAdmin, pinOpen, toast, unread, refreshUnread]);
+    hiddenModules, setHiddenModules,
+    showsModule: (m) => !hiddenModules.includes(m),
+    showsCategory: (c) => !hiddenModules.includes(moduleOf(c)),
+  }), [hiddenModules, setHiddenModules, user, profile, loading, entities, families, banks, vehicles, settings, reloadRefs, selected, setSelected, admin, isAdminMode, refreshAdmin, lockAdmin, pinOpen, toast, unread, refreshUnread]);
 
   return (
     <AppCtx.Provider value={value}>
@@ -191,6 +202,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
       </div>
     </AppCtx.Provider>
   );
+}
+
+/** Which module a calendar category belongs to (mirrors category_module in SQL). */
+export function moduleOf(c: string) {
+  return c.startsWith("insurance") ? "insurance" : c === "loan_emi" ? "loans" : "other";
 }
 
 /** Turn a PostgREST / RPC error into something a family member can read. */

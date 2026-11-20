@@ -53,7 +53,9 @@ export function EventRow({ e }: { e: CalEvent; compact?: boolean }) {
   );
 }
 
-export function EventList({ events, empty }: { events: CalEvent[]; empty?: string }) {
+export function EventList({ events: all, empty }: { events: CalEvent[]; empty?: string }) {
+  const { showsCategory } = useApp();
+  const events = all.filter((e) => showsCategory(e.category));
   if (!events.length) return <div className="card px-4 py-6 text-center text-sm text-ink-3">{empty ?? "Nothing here."}</div>;
   return <div className="card overflow-hidden">{events.map((e) => <EventRow key={e.id} e={e} />)}</div>;
 }

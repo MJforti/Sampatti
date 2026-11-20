@@ -24,12 +24,12 @@ const ITEMS = [
 ] as const;
 
 export default function More() {
-  const { isUltra, admin } = useApp();
+  const { isUltra, admin, showsModule } = useApp();
   return (
     <div>
       <PageHeader title="More" />
       <div className="card overflow-hidden">
-        {ITEMS.map(([href, title, sub, Icon]) => (
+        {ITEMS.filter(([href]) => !(href === "/m/loans" && !showsModule("loans")) && !(href === "/m/insurance" && !showsModule("insurance"))).map(([href, title, sub, Icon]) => (
           <Link key={href} href={href} className="flex items-center gap-3 px-4 py-3.5 border-b hairline last:border-0 active:bg-surface-2">
             <span className="size-11 grid place-items-center rounded-xl bg-surface-2 text-ink-2"><Icon className="size-[18px]" strokeWidth={1.5} /></span>
             <div className="flex-1 min-w-0"><div className="text-[15px] font-medium">{title}</div><div className="text-[13px] text-ink-3 truncate">{sub}</div></div>

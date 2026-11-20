@@ -16,7 +16,7 @@ import { OPEN_STATUSES, isInflow } from "@/lib/status";
 const TYPE_LABEL: Record<string, string> = { individual: "Individual", huf: "HUF", firm: "Firm", company: "Company", trust: "Trust", other: "Entity" };
 
 export default function Profiles() {
-  const { entities, families, isAdminMode, isUltra, admin, tz, loading, toast, reloadRefs } = useApp();
+  const { entities, families, isAdminMode, isUltra, admin, tz, loading, toast, reloadRefs, showsCategory } = useApp();
   const manages = (fid: string | undefined) => isAdminMode && (isUltra || (!!fid && fid === admin?.family_id));
   const [adding, setAdding] = useState<{ familyId: string | null } | null>(null);
   const [famSheet, setFamSheet] = useState<Family | "new" | null>(null);
@@ -29,7 +29,7 @@ export default function Profiles() {
     .in("status", OPEN_STATUSES).lte("event_date", addDays(today, 30))) as { entity_id: string; amount_paise: number | null; category: string; event_date: string }[], [today]);
 
   const stats = (id: string) => {
-    const rows = (due.data ?? []).filter((r) => r.entity_id === id);
+    const rows = (due.data ?? []).filter((r) => r.entity_id === id && showsCategory(r.category));
     return { count: rows.length, overdue: rows.filter((r) => r.event_date < today).length, amount: rows.filter((r) => !isInflow(r.category)).reduce((a, r) => a + (r.amount_paise ?? 0), 0) };
   };
 

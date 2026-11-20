@@ -14,7 +14,7 @@ import { OUTFLOW_GROUPS as GROUP, outflowGroup as groupOf, monthLabel, outflowSh
 
 
 export default function Outflow() {
-  const { selected, entities } = useApp();
+  const { selected, entities, showsCategory } = useApp();
   const [months, setMonths] = useState<3 | 6 | 12>(12);
   const [focus, setFocus] = useState<string | null>(null);
 
@@ -28,7 +28,7 @@ export default function Outflow() {
   const unscheduledTotal = sumPaise(unscheduled.map((i) => i.open));
 
   const data = useMemo(() => {
-    const all = (q.data ?? []).filter((r) => !selected || r.entity_id === selected);
+    const all = (q.data ?? []).filter((r) => (!selected || r.entity_id === selected) && showsCategory(r.category));
     const monthKeys = [...new Set((q.data ?? []).map((r) => r.month))].sort();
     const start = monthKeys[0] ?? new Date().toISOString().slice(0, 8) + "01";
     const keys: string[] = [];
@@ -45,7 +45,7 @@ export default function Outflow() {
     }
     return { rows, keys, byMonth, total: sumPaise(byMonth.map((x) => x.v)), byProfile: [...byProfile.entries()].sort((a, b) => b[1] - a[1]),
       byGroup: [...byGroup.entries()].sort((a, b) => b[1] - a[1]) };
-  }, [q.data, selected, months]);
+  }, [q.data, selected, months, showsCategory]);
 
   const max = Math.max(1, ...data.byMonth.map((x) => x.v));
   const mLabel = monthLabel;

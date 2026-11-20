@@ -63,6 +63,9 @@ export default function Settings() {
       <SectionTitle>Appearance</SectionTitle>
       <ThemePicker />
 
+      <SectionTitle>Sections</SectionTitle>
+      <ModuleSwitches />
+
       <SectionTitle>Families</SectionTitle>
       <JoinFamily />
 
@@ -192,6 +195,31 @@ function MyProfileEmoji() {
         <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>{me.emoji ? "Change" : "Choose"}</Button>
       </div>
       <EmojiPicker entity={me} open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+/** Loans and insurance are off by default; turning one on shows it everywhere and restores its reminders. */
+function ModuleSwitches() {
+  const { user, hiddenModules, setHiddenModules, toast } = useApp();
+  const set = async (m: string, on: boolean) => {
+    const next = on ? hiddenModules.filter((x) => x !== m) : [...hiddenModules, m];
+    const prev = hiddenModules;
+    setHiddenModules(next);
+    const { error } = await supabase().from("user_profiles").update({ hidden_modules: next }).eq("id", user!.id);
+    if (error) { setHiddenModules(prev); toast(friendlyError(error), "error"); }
+  };
+  return (
+    <>
+      <div className="card px-4 py-2">
+        {([["loans", "Loans & EMIs"], ["insurance", "Insurance"]] as const).map(([m, l]) => (
+          <label key={m} className="flex items-center justify-between py-3 border-b hairline last:border-0">
+            <span>{l}</span>
+            <input type="checkbox" role="switch" className="size-6 accent-[var(--accent)]" checked={!hiddenModules.includes(m)} onChange={(e) => set(m, e.target.checked)} />
+          </label>
+        ))}
+      </div>
+      <p className="mt-2 px-1 text-xs text-ink-3">Turned off, they are hidden from your screens, totals, charts and reports, and you get no reminders for them. Nothing is deleted.</p>
     </>
   );
 }

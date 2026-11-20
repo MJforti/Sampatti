@@ -15,7 +15,7 @@ const SEARCH_COLS: Record<string, string[]> = {
 };
 
 export default function Search() {
-  const { entityName } = useApp();
+  const { entityName, showsModule } = useApp();
   const [term, setTerm] = useState("");
   const [hits, setHits] = useState<Hit[] | null>(null);
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function Search() {
     if (t.length < 2) { setHits(null); return; }
     const h = setTimeout(async () => {
       const sb = supabase();
-      const res = await Promise.all(MODULE_LIST.map(async (m) => {
+      const res = await Promise.all(MODULE_LIST.filter((m) => showsModule(m)).map(async (m) => {
         const mod = MODULES[m];
         const { data } = await sb.from(mod.table).select("*").or(SEARCH_COLS[m].map((c) => `${c}.ilike.%${t}%`).join(",")).limit(10);
         return (data ?? []).map((r) => ({ href: `/m/${m}/${r.id}`, title: mod.primary(r), sub: `${mod.singular} · ${entityName(r.entity_id)}` }));

@@ -25,7 +25,7 @@ const yearly = (p: Pol) => (p.premium_paise ?? 0) * ({ monthly: 12, quarterly: 4
 export default function AdvisorReportPage() { return <Suspense><AdvisorReport /></Suspense>; }
 
 function AdvisorReport() {
-  const { entities, selected, setSelected, tz, profile } = useApp();
+  const { entities, selected, setSelected, tz, profile, showsModule, showsCategory } = useApp();
   const sp = useSearchParams();
   // A link from Cash outflow carries the chosen profile; adopt it as the current selection.
   useEffect(() => {
@@ -52,7 +52,9 @@ function AdvisorReport() {
 
   if (q.error) return <ErrorState error={q.error} retry={q.reload} />;
   if (q.loading || !q.data) return <div><PageHeader title="Financial report" back="/reports" /><ListSkeleton rows={6} /></div>;
-  const { inv, loans, pols, ev, out } = q.data;
+  const { inv } = q.data;
+  const loans = showsModule("loans") ? q.data.loans : [], pols = showsModule("insurance") ? q.data.pols : [];
+  const ev = q.data.ev.filter((e) => showsCategory(e.category)), out = q.data.out.filter((r) => showsCategory(r.category));
   const name = (id: string) => entities.find((e) => e.id === id)?.name ?? "Unknown";
   const scopeName = selected ? name(selected) : "The family";
   const members = selected ? entities.filter((e) => e.id === selected) : entities.filter((e) => e.is_active);
@@ -108,9 +110,9 @@ function AdvisorReport() {
   const costly = loansByRate.filter((l) => Number(l.interest_rate) >= 9);
   if (costly.length) recs.push({ level: "Plan", title: `Prioritise prepaying the ${costly[0].lender} ${label(LOAN_TYPES, costly[0].loan_type).toLowerCase()} at ${costly[0].interest_rate}%`,
     body: `Surplus cash is usually best used against the highest-rate debt first (avalanche method). ${formatINR(costly[0].outstanding_paise)} is outstanding. Compare the post-tax return of your investments with ${costly[0].interest_rate}% before investing extra elsewhere${costly.length > 1 ? `, then move to ${costly.slice(1, 3).map((l) => `${l.lender} at ${l.interest_rate}%`).join(" and ")}` : ""}.` });
-  if (debt > 0 && lifeCover < debt) recs.push({ level: "Plan", title: "Life cover is lower than outstanding loans",
+  if (showsModule("insurance") && debt > 0 && lifeCover < debt) recs.push({ level: "Plan", title: "Life cover is lower than outstanding loans",
     body: `Loans outstanding are ${formatINR(debt)} against ${formatINR(lifeCover)} of life/term cover. A term plan at least equal to outstanding loans (plus future goals) protects the family from inheriting the debt.` });
-  if (!healthCover) recs.push({ level: "Plan", title: "No health insurance on record",
+  if (showsModule("insurance") && !healthCover) recs.push({ level: "Plan", title: "No health insurance on record",
     body: "A family-floater health policy is the first line of defence against large medical bills. If cover exists elsewhere (e.g. employer), add it here so renewals are tracked." });
   const noHealth = members.filter((m) => m.entity_type === "individual" && !activePols.some((p) => p.category === "health" && p.entity_id === m.id));
   if (healthCover && noHealth.length) recs.push({ level: "Review", title: `Check health cover for ${noHealth.map((m) => m.name).join(", ")}`,
@@ -132,7 +134,7 @@ function AdvisorReport() {
   const order = { "Act now": 0, Plan: 1, Review: 2 } as const;
   recs.sort((a, b) => order[a.level] - order[b.level]);
 
-  const summary = `${scopeName} has an estimated net worth of ${formatINR(netWorth)}: investments worth ${formatINR(current)}${invested ? ` (${gain >= 0 ? "up" : "down"} ${formatINR(Math.abs(gain))}, ${pct(Math.abs(gain), invested)}% on ${formatINR(invested)} invested)` : ""} against ${formatINR(debt)} of loans. Committed outflow over the next 12 months is ${formatINR(outTotal)}, about ${formatINR(avg)} a month, of which EMIs are ${formatINR(emi)} and SIPs ${formatINR(sip)} a month. ${overdue.length ? `${overdue.length} payment${overdue.length > 1 ? "s are" : " is"} overdue and need${overdue.length > 1 ? "" : "s"} attention.` : "Nothing is overdue."}`;
+  const summary = `${scopeName} has an estimated net worth of ${formatINR(netWorth)}: investments worth ${formatINR(current)}${invested ? ` (${gain >= 0 ? "up" : "down"} ${formatINR(Math.abs(gain))}, ${pct(Math.abs(gain), invested)}% on ${formatINR(invested)} invested)` : ""}${showsModule("loans") ? ` against ${formatINR(debt)} of loans` : ""}. Committed outflow over the next 12 months is ${formatINR(outTotal)}, about ${formatINR(avg)} a month, ${showsModule("loans") ? `of which EMIs are ${formatINR(emi)} and SIPs ${formatINR(sip)} a month` : `of which SIPs are ${formatINR(sip)} a month`}. ${overdue.length ? `${overdue.length} payment${overdue.length > 1 ? "s are" : " is"} overdue and need${overdue.length > 1 ? "" : "s"} attention.` : "Nothing is overdue."}`;
 
   const T = ({ head, rows, num = [] }: { head: string[]; rows: (string | number)[][]; num?: number[] }) => (
     <table className="w-full text-[13px] border-collapse">
@@ -140,6 +142,7 @@ function AdvisorReport() {
       <tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} className={`py-1.5 pr-2 border-b hairline align-top ${num.includes(j) ? "text-right num whitespace-nowrap" : ""}`}>{c}</td>)}</tr>)}</tbody>
     </table>
   );
+  let sec = 0;
   const H = ({ n, children }: { n: number; children: string }) => <h2 className="report-h text-[17px] font-medium mt-8 mb-3 pb-1.5 border-b hairline"><span className="text-ink-3 mr-2 num">{n}</span>{children}</h2>;
 
   return (
@@ -160,16 +163,16 @@ function AdvisorReport() {
           </div>
         </header>
 
-        <H n={1}>Summary</H>
+        <H n={++sec}>Summary</H>
         <p className="text-[14px] leading-relaxed text-ink-2">{summary}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-          {[["Net worth (est.)", netWorth], ["Investments", current], ["Loans outstanding", debt], ["12-month outflow", outTotal]].map(([l, v]) => (
+          {[["Net worth (est.)", netWorth], ["Investments", current], ...(showsModule("loans") ? [["Loans outstanding", debt]] : []), ["12-month outflow", outTotal]].map(([l, v]) => (
             <div key={l as string} className="border hairline rounded-xl px-3 py-2.5"><div className="text-[12px] text-ink-3">{l}</div><div className="num text-[17px] font-medium">{formatINR(v as number)}</div></div>
           ))}
         </div>
         <div className="report-charts"><HomeCharts entity={selected} /></div>
 
-        <H n={2}>Recommendations</H>
+        <H n={++sec}>Recommendations</H>
         {recs.length ? (
           <ol className="space-y-3">{recs.map((r, i) => (
             <li key={i} className="report-avoid flex gap-3">
@@ -178,12 +181,12 @@ function AdvisorReport() {
             </li>))}</ol>
         ) : <p className="text-[14px] text-ink-2">No issues found in the recorded data. Keep records and statement values up to date.</p>}
 
-        <H n={3}>Due in the next 30 days</H>
+        <H n={++sec}>Due in the next 30 days</H>
         {next30.length ? <T head={["Date", "Item", "Profile", "Account", "Amount"]} num={[4]}
           rows={[...next30.map((e) => [formatDate(e.event_date, "short"), e.title, e.entity_name, e.bank_name ? `${e.bank_name}${e.account_last4 ? " ••" + e.account_last4 : ""}` : "", e.amount_paise != null ? formatINR(e.amount_paise) : ""]),
             ["", "Total", "", "", formatINR(due30)]]} /> : <p className="text-[14px] text-ink-2">Nothing due.</p>}
 
-        <H n={4}>Investments</H>
+        <H n={++sec}>Investments</H>
         {inv.length ? (
           <>
             <T head={["Type", "Value", "Share"]} num={[1, 2]} rows={allocRows.map(([c, v]) => [label(INVESTMENT_TYPES, c), formatINR(v), `${pct(v, current)}%`])} />
@@ -212,35 +215,35 @@ function AdvisorReport() {
           </div>
         )}
 
-        <H n={5}>Loans</H>
+        {showsModule("loans") && <><H n={++sec}>Loans</H>
         {loansByRate.length ? (
           <>
             <T head={["Loan", "Profile", "Rate", "Outstanding", "EMI"]} num={[2, 3, 4]}
               rows={loansByRate.map((l) => [`${l.lender} ${label(LOAN_TYPES, l.loan_type).toLowerCase()}`, name(l.entity_id), `${l.interest_rate}% ${l.rate_type}`, formatINR(l.outstanding_paise), formatINR(l.emi_paise)])} />
             <p className="text-[13px] text-ink-3 mt-2">Sorted by interest rate, highest first. Total EMIs {formatINR(emi)} a month ({formatINR(emi * 12)} a year).</p>
           </>
-        ) : <p className="text-[14px] text-ink-2">No loans outstanding.</p>}
+        ) : <p className="text-[14px] text-ink-2">No loans outstanding.</p>}</>}
 
-        <H n={6}>Insurance</H>
+        {showsModule("insurance") && <><H n={++sec}>Insurance</H>
         {activePols.length ? (
           <>
             <T head={["Policy", "Profile", "Cover", "Premium / year", "Renews"]} num={[2, 3]}
               rows={activePols.map((p) => [`${p.policy_name || p.insurer} (${label(INSURANCE_TYPES, p.category).toLowerCase()})`, name(p.entity_id), p.sum_assured_paise ? formatINR(p.sum_assured_paise) : "", formatINR(yearly(p)), formatDate(p.expiry_date ?? p.next_premium_date, "short")])} />
             <p className="text-[13px] text-ink-3 mt-2">Life/term cover {formatINR(lifeCover)} · health cover {formatINR(healthCover)} · premiums {formatINR(premiums)} a year.</p>
           </>
-        ) : <p className="text-[14px] text-ink-2">No active policies recorded.</p>}
+        ) : <p className="text-[14px] text-ink-2">No active policies recorded.</p>}</>}
 
-        <H n={7}>Cash outflow, next 12 months</H>
+        <H n={++sec}>Cash outflow, next 12 months</H>
         <T head={["Month", "Outflow"]} num={[1]} rows={[...byMonth.map((x) => [monthLabel(x.k, "long"), formatINR(x.v)]), ["Total", formatINR(outTotal)]]} />
         {byType.size > 0 && <div className="mt-3"><T head={["By type", "Amount", "Share"]} num={[1, 2]} rows={[...byType.entries()].sort((a, b) => b[1] - a[1]).map(([t, v]) => [t, formatINR(v), `${pct(v, outTotal)}%`])} /></div>}
 
         {!selected && members.length > 1 && (
           <>
-            <H n={8}>By profile</H>
-            <T head={["Profile", "Investments", "Loans", "12-month outflow"]} num={[1, 2, 3]}
+            <H n={++sec}>By profile</H>
+            <T head={showsModule("loans") ? ["Profile", "Investments", "Loans", "12-month outflow"] : ["Profile", "Investments", "12-month outflow"]} num={[1, 2, 3]}
               rows={members.map((m) => [m.name,
                 formatINR(sumPaise(inv.filter((i) => i.entity_id === m.id).map((i) => i.current_value_paise ?? i.invested_paise))),
-                formatINR(sumPaise(loans.filter((l) => l.entity_id === m.id).map((l) => l.outstanding_paise))),
+                ...(showsModule("loans") ? [formatINR(sumPaise(loans.filter((l) => l.entity_id === m.id).map((l) => l.outstanding_paise)))] : []),
                 formatINR(sumPaise(outRows.filter((r) => r.entity_id === m.id).map((r) => r.amount_paise)))])} />
           </>
         )}

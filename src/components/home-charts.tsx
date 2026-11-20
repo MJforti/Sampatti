@@ -8,6 +8,7 @@ import { formatINR, formatINRCompact, sumPaise } from "@/lib/money";
 import { OUTFLOW_GROUPS, outflowGroup, outflowMonths, monthLabel, type OutflowRow } from "@/lib/outflow";
 import { INVESTMENT_TYPES, INSURANCE_TYPES, LOAN_TYPES } from "@/lib/modules";
 import { SectionTitle } from "./ui";
+import { useApp } from "./providers";
 
 const label = (list: readonly (readonly [string, string])[], k: string) => list.find(([v]) => v === k)?.[1] ?? k;
 // One accent, shown at decreasing strength for each series
@@ -19,6 +20,7 @@ type Loan = { loan_type: string; lender: string; principal_paise: number; outsta
 type Pol = { category: string; sum_assured_paise: number | null; premium_paise: number | null };
 
 export function HomeCharts({ entity, hideOutflow }: { entity: string | null; hideOutflow?: boolean }) {
+  const { showsModule, showsCategory } = useApp();
   const q = useQuery(async () => {
     const sb = supabase();
     const f = <T,>(x: T) => x as any;
@@ -31,7 +33,8 @@ export function HomeCharts({ entity, hideOutflow }: { entity: string | null; hid
     return { inv: unwrap(a) as Inv[], loans: unwrap(b) as Loan[], pols: unwrap(c) as Pol[], out };
   }, [entity]);
   if (!q.data) return null;
-  const { inv, loans, pols, out } = q.data;
+  const inv = q.data.inv, loans = showsModule("loans") ? q.data.loans : [], pols = showsModule("insurance") ? q.data.pols : [];
+  const out = q.data.out.filter((r) => showsCategory(r.category));
   const hasAny = (!hideOutflow && out.some((r) => r.amount_paise > 0)) || inv.some((r) => (r.current_value_paise ?? r.invested_paise) > 0) || loans.length || pols.some((p) => p.sum_assured_paise);
   if (!hasAny) return null;
   return (

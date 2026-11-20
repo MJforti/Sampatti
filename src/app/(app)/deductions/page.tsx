@@ -11,13 +11,13 @@ import { formatINR, sumPaise } from "@/lib/money";
 import { OPEN_STATUSES, isInflow } from "@/lib/status";
 
 export default function Deductions() {
-  const { tz, selected, entityName } = useApp();
+  const { tz, selected, entityName, showsCategory } = useApp();
   const [days, setDays] = useState(30);
   const today = todayISO(tz);
   const q = useQuery(async () => {
     let qq = supabase().from("financial_calendar_events").select("*").in("status", OPEN_STATUSES).lte("event_date", addDays(today, days)).order("event_date");
     if (selected) qq = qq.eq("entity_id", selected);
-    return (unwrap(await qq) as CalEvent[]).filter((e) => !isInflow(e.category) && e.amount_paise);
+    return (unwrap(await qq) as CalEvent[]).filter((e) => !isInflow(e.category) && e.amount_paise && showsCategory(e.category));
   }, [today, days, selected]);
 
   const groups = new Map<string, CalEvent[]>();

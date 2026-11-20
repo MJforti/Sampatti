@@ -23,7 +23,7 @@ function csv(name: string, rows: (string | number)[][]) {
 }
 
 export default function Reports() {
-  const { entities, tz } = useApp();
+  const { entities, tz, showsModule, showsCategory } = useApp();
   const today = todayISO(tz);
   const q = useQuery(async () => {
     const sb = supabase();
@@ -40,7 +40,8 @@ export default function Reports() {
 
   if (q.error) return <ErrorState error={q.error} retry={q.reload} />;
   if (q.loading || !q.data) return <div><PageHeader title="Reports" back="/more" /><ListSkeleton rows={6} /></div>;
-  const { fam, per, ev, paid, out, alts } = q.data;
+  const { fam, per, alts } = q.data;
+  const ev = q.data.ev.filter((e) => showsCategory(e.category)), paid = q.data.paid.filter((e) => showsCategory(e.category)), out = q.data.out.filter((r) => showsCategory(r.category));
   const altCur = (x: (typeof alts)[number]) => x.current_value_paise ?? x.invested_paise;
   const altUndrawn = (x: (typeof alts)[number]) => x.category === "aif" ? Math.max(0, Number(x.details?.aif_commitment_paise ?? 0) - Number(x.details?.aif_drawn_paise ?? 0)) : 0;
   const altKind = (x: (typeof alts)[number]) => x.category === "pms" ? "PMS" : `AIF ${({ cat1: "Cat I", cat2: "Cat II", cat3: "Cat III" } as Record<string, string>)[x.details?.aif_category] ?? ""}`.trim();
@@ -59,7 +60,9 @@ export default function Reports() {
     const cur = banks.get(k) ?? { label: e.bank_name ? `${e.bank_name}${e.account_last4 ? " ••" + e.account_last4 : ""}` : "No account linked", v30: 0, n: 0 };
     cur.v30 += e.amount_paise ?? 0; cur.n++; banks.set(k, cur);
   }
-  const cols = ["current_value", "loans_outstanding", "net_worth_estimate", "monthly_emi", "monthly_sip", "annual_premium", "insurance_cover"] as const;
+  const ALL_COLS = ["current_value", "loans_outstanding", "net_worth_estimate", "monthly_emi", "monthly_sip", "annual_premium", "insurance_cover"] as const;
+  const COL_MODULE: Partial<Record<(typeof ALL_COLS)[number], string>> = { loans_outstanding: "loans", net_worth_estimate: "loans", monthly_emi: "loans", annual_premium: "insurance", insurance_cover: "insurance" };
+  const cols = ALL_COLS.filter((c) => !COL_MODULE[c] || showsModule(COL_MODULE[c]!));
   const colLabel = { current_value: "Investments", loans_outstanding: "Loans", net_worth_estimate: "Est. net worth", monthly_emi: "EMI / month", monthly_sip: "SIP / month", annual_premium: "Premium / year", insurance_cover: "Cover" };
 
   const exportAll = () => csv(`sampatti-report-${today}`, [
