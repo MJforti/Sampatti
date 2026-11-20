@@ -8,3 +8,4 @@ out
 next-env.d.ts
 supabase/.temp
 supabase/.branches
+.claude/settings.local.json
