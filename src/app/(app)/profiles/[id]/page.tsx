@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { ChevronRight, Pencil, Printer, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApp, friendlyError } from "@/components/providers";
+import { HomeCharts } from "@/components/home-charts";
 import { ProfileForm } from "@/components/profile-form";
 import { MemberAvatar, EmojiPicker, canChooseEmoji } from "@/components/member-emoji";
 import { EventList, type CalEvent } from "@/components/obligations";
@@ -115,6 +116,8 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
               </>
             );
           })()}
+          <HomeCharts entity={id} />
+
           <SectionTitle>Records</SectionTitle>
           <div className="card overflow-hidden">
             {MODULE_LIST.map((m, i) => (
