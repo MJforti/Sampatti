@@ -55,7 +55,7 @@ export default function Settings() {
             <Button variant="secondary" onClick={() => pw.length < 10 ? toast("Use at least 10 characters", "error") : run(() => sb.auth.updateUser({ password: pw }).then((r) => { setPw(""); return r; }), "Password updated")}>Set</Button></div></label>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={async () => { await sb.auth.signOut({ scope: "others" }); toast("Signed out on other devices"); }}>Sign out others</Button>
-          <Button variant="secondary" onClick={async () => { await sb.auth.signOut(); replayIntroOnLogin(); router.replace("/login"); }}><LogOut className="size-4" />Sign out</Button>
+          <Button variant="secondary" onClick={async () => { await sb.auth.signOut(); replayIntroOnLogin("Signed out successfully"); router.replace("/login"); }}><LogOut className="size-4" />Sign out</Button>
         </div>
       </div>
 

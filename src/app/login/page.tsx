@@ -7,7 +7,7 @@ import { Splash, useIntro, replayIntroOnAppOpen, INTRO_MS } from "@/components/s
 
 export default function Login() {
   const intro = useIntro("login");
-  const [signupIntro, setSignupIntro] = useState(false);
+  const [tabIntro, setTabIntro] = useState<string | null>(null);
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
@@ -30,7 +30,7 @@ export default function Login() {
       if (error) { setMsg(error.message); setBusy(false); return; }
     }
     const { error } = await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
-    if (!error) replayIntroOnAppOpen();
+    if (!error) replayIntroOnAppOpen(mode === "signup" ? "Sign up successful. Welcome to Sampatti" : "Signed in successfully");
     if (error) { setMsg(error.message === "Invalid login credentials" ? "Email or password is incorrect" : error.message); setBusy(false); return; }
     if (mode === "signup" && code.trim()) {
       const j = await sb.rpc("join_family", { p_code: code });
@@ -40,7 +40,7 @@ export default function Login() {
   };
 
   const signup = mode === "signup";
-  if (intro || signupIntro) return <Splash />;
+  if (intro || tabIntro) return <Splash place="login" message={tabIntro ?? undefined} />;
   return (
     <main className="min-h-dvh flex flex-col justify-center px-6 max-w-sm mx-auto safe-top safe-bottom">
       <div className="mb-10">
@@ -49,7 +49,7 @@ export default function Login() {
       </div>
       <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-surface-2 mb-5" role="tablist">
         {(["signin", "signup"] as const).map((m) => (
-          <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { if (m !== mode) { setSignupIntro(true); setTimeout(() => setSignupIntro(false), INTRO_MS); } setMode(m); setMsg(null); }}
+          <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { if (m !== mode) { setTabIntro(m === "signup" ? "Let’s create your account" : "Sign in to continue"); setTimeout(() => setTabIntro(null), INTRO_MS); } setMode(m); setMsg(null); }}
             className={`h-10 rounded-xl text-sm font-medium transition-colors ${mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-3"}`}>
             {m === "signin" ? "Sign in" : "Create account"}
           </button>

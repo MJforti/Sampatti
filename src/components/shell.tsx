@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const intro = useIntro("app");
 
   if (loading || !user || intro) {
-    return <Splash />;
+    return <Splash place="app" />;
   }
 
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));

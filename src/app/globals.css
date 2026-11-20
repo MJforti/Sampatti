@@ -138,3 +138,5 @@ input, select, textarea { font-size: 16px; } /* prevents iOS zoom */
   .splash-tile, .splash-line, .splash-dot, .splash-rule, .splash-letter, .splash-tag { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
   .splash-rule { opacity: .35; transform: translateX(-50%); }
 }
+.splash-note { opacity: 0; animation: sheet-in .45s 1.6s cubic-bezier(.2,.8,.2,1) forwards; }
+@media (prefers-reduced-motion: reduce) { .splash-note { animation: none; opacity: 1; } }

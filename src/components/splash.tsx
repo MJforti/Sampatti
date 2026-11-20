@@ -2,7 +2,17 @@
 import { useEffect, useState } from "react";
 
 // Loading screen: the logo's line draws itself, a ledger rule runs across, and the name writes in.
-export function Splash() {
+export function Splash({ message, place }: { message?: string; place?: "login" | "app" }) {
+  // A message left by the previous screen (e.g. "Logged out") for this place
+  const [stored, setStored] = useState<string | null>(null);
+  useEffect(() => {
+    if (!place) return;
+    try {
+      const m = JSON.parse(sessionStorage.getItem(MSG_KEY) ?? "null") as { place: string; text: string } | null;
+      if (m?.place === place) { setStored(m.text); sessionStorage.removeItem(MSG_KEY); }
+    } catch { /* ignore */ }
+  }, [place]);
+  const note = message ?? stored;
   return (
     <div className="splash min-h-dvh grid place-items-center overflow-hidden" role="status" aria-label="Loading Sampatti">
       <div className="flex flex-col items-center">
@@ -18,10 +28,21 @@ export function Splash() {
           </div>
         </div>
         <p className="splash-tag mt-3 text-sm text-ink-3">Every rupee, in its place.</p>
+        {note && (
+          <p className="splash-note mt-6 inline-flex items-center gap-2 rounded-full bg-accent-soft text-accent px-4 h-9 text-sm font-medium" aria-live="polite">
+            {!message && <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+            {note}
+          </p>
+        )}
       </div>
     </div>
   );
 }
+
+const MSG_KEY = "sampatti.intro.msg";
+const leaveMessage = (place: "login" | "app", text?: string) => {
+  try { text ? sessionStorage.setItem(MSG_KEY, JSON.stringify({ place, text })) : sessionStorage.removeItem(MSG_KEY); } catch { /* ignore */ }
+};
 
 /** How long the splash stays up, long enough for the whole animation. */
 export const INTRO_MS = 2600;
@@ -42,11 +63,13 @@ export function useIntro(place: "login" | "app") {
 }
 
 /** Someone just signed in or created an account: play the splash as the app opens. */
-export function replayIntroOnAppOpen() {
+export function replayIntroOnAppOpen(message?: string) {
   try { sessionStorage.removeItem("sampatti.intro.app"); } catch { /* ignore */ }
+  leaveMessage("app", message);
 }
 
 /** After logging out, play the splash again as the login page opens. */
-export function replayIntroOnLogin() {
+export function replayIntroOnLogin(message?: string) {
   try { sessionStorage.removeItem("sampatti.intro.login"); } catch { /* ignore */ }
+  leaveMessage("login", message);
 }
