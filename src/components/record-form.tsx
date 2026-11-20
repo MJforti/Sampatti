@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Field, ModuleDef } from "@/lib/modules";
 import { FREQUENCIES } from "@/lib/modules";
 import { paiseToInput, parseRupeesToPaise } from "@/lib/money";
@@ -18,7 +18,7 @@ function getVal(r: Rec, key: string) {
 export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
   mod: ModuleDef; record?: Rec | null; open: boolean; onClose: () => void; onSaved: (r: Rec) => void; defaults?: Rec;
 }) {
-  const { adminEntities: entities, banks, vehicles, toast, isAdminMode, setPinOpen } = useApp();
+  const { adminEntities: entities, banks, vehicles, toast, isAdminMode, setPinOpen, user } = useApp();
   const initial = useMemo(() => {
     const base: Rec = { ...(defaults ?? {}), ...(record ?? {}) };
     const v: Rec = {};
@@ -33,7 +33,26 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [lastInit, setLastInit] = useState(initial);
-  if (lastInit !== initial) { setLastInit(initial); setVals(initial); setErrors({}); }
+  // Unsaved progress is kept on this device per person, form and record, so leaving midway loses nothing.
+  const draftKey = user ? `sampatti.draft.${user.id}.${mod.key}.${record?.id ?? "new"}` : null;
+  const [restored, setRestored] = useState(false);
+  if (lastInit !== initial) {
+    const d = readDraft(draftKey, initial);
+    setLastInit(initial); setVals(d ? { ...initial, ...d } : initial); setRestored(!!d); setErrors({});
+  }
+  // Pick up a draft when the form is first opened (or a different record is opened)
+  useEffect(() => {
+    if (!open) return;
+    const d = readDraft(draftKey, initial);
+    if (d) { setVals({ ...initial, ...d }); setRestored(true); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, draftKey]);
+  useEffect(() => {
+    if (!draftKey || !open) return;
+    const changed = Object.keys(vals).some((k) => JSON.stringify(vals[k]) !== JSON.stringify(initial[k]));
+    if (changed) try { localStorage.setItem(draftKey, JSON.stringify(vals)); } catch { /* ignore */ }
+  }, [vals, initial, draftKey, open]);
+  const discardDraft = () => { try { if (draftKey) localStorage.removeItem(draftKey); } catch { /* ignore */ } setVals(initial); setRestored(false); };
 
   const set = (k: string, v: unknown) => setVals((s) => ({ ...s, [k]: v }));
   const visible = mod.fields.filter((f) => !f.showIf || f.showIf(vals));
@@ -77,6 +96,8 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
     const { data, error } = await q;
     setBusy(false);
     if (error) { toast(friendlyError(error), "error"); return; }
+    try { if (draftKey) localStorage.removeItem(draftKey); } catch { /* ignore */ }
+    setRestored(false);
     toast(record?.id ? "Saved" : `${mod.singular} added`);
     onSaved(data);
   };
@@ -86,6 +107,12 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
     <Sheet open={open} onClose={onClose} title={record?.id ? `Edit ${mod.singular.toLowerCase()}` : `Add ${mod.singular.toLowerCase()}`}
       footer={<Button className="w-full" size="lg" onClick={save} loading={busy}>{record?.id ? "Save changes" : `Add ${mod.singular.toLowerCase()}`}</Button>}>
       <div className="space-y-4 pb-4">
+        {restored && (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-accent-soft px-3 py-2 text-[13px] text-accent">
+            <span>Picked up where you left off</span>
+            <button type="button" onClick={discardDraft} className="h-9 -my-1 px-2 font-medium underline underline-offset-2">Start over</button>
+          </div>
+        )}
         {visible.map((f) => {
           const header = f.section && f.section !== lastSection ? f.section : null;
           if (f.section) lastSection = f.section;
@@ -149,4 +176,15 @@ function FieldInput({ f, value, onChange, error, entities, banks, allBanks, vehi
       {error ? <p className="mt-1 text-xs text-danger">{error}</p> : f.help ? <p className="mt-1 text-xs text-ink-3">{f.help}</p> : null}
     </div>
   );
+}
+
+function readDraft(key: string | null, initial?: Rec): Rec | null {
+  if (!key || typeof window === "undefined") return null;
+  try {
+    const s = localStorage.getItem(key); if (!s) return null;
+    const d = JSON.parse(s) as Rec;
+    // A draft identical to the blank/current form isn't worth restoring
+    if (initial && !Object.keys(d).some((k) => JSON.stringify(d[k]) !== JSON.stringify(initial[k]))) return null;
+    return d;
+  } catch { return null; }
 }
