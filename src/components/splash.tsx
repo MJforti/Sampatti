@@ -14,7 +14,7 @@ export function Splash() {
         <div className="relative mt-6 w-[min(80vw,320px)]">
           <div className="splash-rule absolute left-1/2 top-full h-px w-[200vw] -translate-x-1/2 bg-[var(--accent)]" />
           <div className="text-center text-[32px] font-medium tracking-tight leading-tight pb-2" aria-hidden>
-            {"Sampatti".split("").map((ch, i) => <span key={i} className="splash-letter inline-block" style={{ animationDelay: `${0.75 + i * 0.05}s` }}>{ch}</span>)}
+            {"Sampatti".split("").map((ch, i) => <span key={i} className="splash-letter inline-block" style={{ animationDelay: `${1.1 + i * 0.07}s` }}>{ch}</span>)}
           </div>
         </div>
         <p className="splash-tag mt-3 text-sm text-ink-3">Every rupee, in its place.</p>
@@ -30,7 +30,7 @@ export function useIntro(place: "login" | "app") {
     let seen = false;
     try { seen = sessionStorage.getItem(`sampatti.intro.${place}`) === "1"; sessionStorage.setItem(`sampatti.intro.${place}`, "1"); } catch { /* ignore */ }
     if (seen) { setIntro(false); return; }
-    const t = setTimeout(() => setIntro(false), 1700);
+    const t = setTimeout(() => setIntro(false), 2600);
     return () => clearTimeout(t);
   }, []);
   return intro;
