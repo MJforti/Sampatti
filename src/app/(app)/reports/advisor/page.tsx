@@ -1,5 +1,8 @@
 "use client";
 import { Printer } from "lucide-react";
+import { Suspense, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { ProfileSelect } from "@/components/profile-select";
 import { useApp } from "@/components/providers";
 import { Button, ErrorState, ListSkeleton, PageHeader } from "@/components/ui";
 import { supabase } from "@/lib/supabase/client";
@@ -18,8 +21,16 @@ type Pol = { entity_id: string; category: string; insurer: string; policy_name: 
 const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0);
 const yearly = (p: Pol) => (p.premium_paise ?? 0) * ({ monthly: 12, quarterly: 4, half_yearly: 2, weekly: 52 } as Record<string, number>)[p.premium_frequency ?? ""] || (p.premium_paise ?? 0);
 
-export default function AdvisorReport() {
-  const { entities, selected, tz, profile } = useApp();
+export default function AdvisorReportPage() { return <Suspense><AdvisorReport /></Suspense>; }
+
+function AdvisorReport() {
+  const { entities, selected, setSelected, tz, profile } = useApp();
+  const sp = useSearchParams();
+  // A link from Cash outflow carries the chosen profile; adopt it as the current selection.
+  useEffect(() => {
+    const p = sp.get("profile");
+    if (p && entities.some((e) => e.id === p) && p !== selected) setSelected(p);
+  }, [sp, entities]); // eslint-disable-line react-hooks/exhaustive-deps
   const today = todayISO(tz);
 
   const q = useQuery(async () => {
@@ -129,7 +140,8 @@ export default function AdvisorReport() {
       <div className="no-print">
         <PageHeader title="Financial report" subtitle="Prepared from your records, ready to save as PDF" back="/reports"
           action={<Button size="sm" onClick={() => window.print()}><Printer className="size-4" />Save PDF</Button>} />
-        <p className="text-sm text-ink-3 mb-4">Tip: in the print window choose “Save as PDF”. Pick a profile on the home screen first to make a report for just that person.</p>
+        <ProfileSelect />
+        <p className="text-sm text-ink-3 mt-2 mb-4">Report for {selected ? (entities.find((e) => e.id === selected)?.name ?? "this profile") : "the whole family"}. In the print window choose “Save as PDF”.</p>
       </div>
 
       <article className="report card px-6 py-6">

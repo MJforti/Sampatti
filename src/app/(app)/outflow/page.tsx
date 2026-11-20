@@ -61,7 +61,7 @@ export default function Outflow() {
         <>
           <div className="grid grid-cols-2 gap-2 mb-2 no-print">
             <Button variant="secondary" onClick={exportCsv} disabled={!data.total}><Download className="size-4" />Excel / CSV</Button>
-            <Link href="/reports/advisor" className="inline-flex items-center justify-center gap-2 h-12 px-4 rounded-2xl bg-accent text-accent-ink font-medium text-[15px] whitespace-nowrap"><Printer className="size-4" />Financial report</Link>
+            <Link href={selected ? `/reports/advisor?profile=${selected}` : "/reports/advisor"} className="inline-flex items-center justify-center gap-2 h-12 px-4 rounded-2xl bg-accent text-accent-ink font-medium text-[15px] whitespace-nowrap"><Printer className="size-4" />Financial report</Link>
           </div>
           <div className="card px-5 pt-5 pb-4">
             <div className="text-sm text-ink-3">{focused ? `In ${mLabel(focused.k, "long")}` : `Total over the next ${months} months`}</div>
