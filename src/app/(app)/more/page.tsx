@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { TrendingUp, ShieldCheck, Landmark, Car, Building2, FileText, BarChart3, Settings, Repeat, ChevronRight, Wallet, UserCog, ScrollText, Search } from "lucide-react";
+import { TrendingUp, ShieldCheck, Landmark, Car, Building2, FileText, BarChart3, Settings, Repeat, ChevronRight, Wallet, UserCog, ScrollText, Search, Calculator } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { AdminToggle } from "@/components/shell";
 import { ThemePicker } from "@/components/theme";
@@ -18,6 +18,7 @@ const ITEMS = [
   ["/m/obligations", "Recurring payments", "Rent, subscriptions, custom deadlines", Repeat],
   ["/documents", "Documents", "Policies, statements, certificates", FileText],
   ["/reports", "Reports", "Assets, liabilities and outflows", BarChart3],
+  ["/calculators", "Calculators", "SIP, home loan EMI, FD, RD, goal planning", Calculator],
   ["/search", "Search", "Find any record", Search],
   ["/settings", "Settings", "Notifications, account, security", Settings],
 ] as const;
