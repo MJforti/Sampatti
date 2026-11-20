@@ -23,7 +23,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
   vehicle_fitness: "Fitness certificate", vehicle_registration: "Registration", vehicle_permit: "Permit",
   vehicle_service: "Service", tax_gst: "GST", tax_tds_return: "TDS return", tax_tds_payment: "TDS payment",
   tax_itr: "Income tax return", tax_advance: "Advance tax", tax_audit: "Tax audit",
-  compliance_other: "Compliance", document_expiry: "Document expiry", recurring_payment: "Recurring payment",
+  compliance_other: "Compliance", document_expiry: "Document expiry", recurring_payment: "Recurring payment", aif_call: "AIF capital call",
   custom: "Custom",
 };
 

@@ -314,3 +314,13 @@ select pg_temp.act_as(null);
 insert into investments (entity_id, category, name, invested_paise) select id, 'pms', 'Test PMS', 5000000000 from family_entities limit 1;
 insert into investments (entity_id, category, name, invested_paise, maturity_date) select id, 'aif', 'Test AIF Cat II', 2500000000, current_date + 1500 from family_entities limit 1;
 select pg_temp.ok((select count(*) = 2 from investments where category in ('pms','aif')), 'PMS and AIF investments can be saved');
+
+-- AIF capital call appears in projected outflow
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select verify_admin_pin('4826');
+insert into investments (entity_id, category, name, invested_paise, details)
+select id, 'aif', 'Call Test AIF', 0, jsonb_build_object('aif_commitment_paise', 1000000000, 'aif_drawn_paise', 0,
+  'aif_next_call_date', (date_trunc('month', app_today())::date + 40)::text, 'aif_next_call_paise', 250000000)
+from family_entities where name = 'Vishesh Jain';
+select pg_temp.ok((select sum(amount_paise) = 250000000 from projected_outflows(12) where category = 'aif_call'), 'next AIF capital call is projected');
+select pg_temp.act_as(null);

@@ -8,7 +8,7 @@ import { MemberAvatar } from "@/components/member-emoji";
 import { Button, Chip, ErrorState, ListSkeleton, PageHeader, SectionTitle, cx } from "@/components/ui";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
-import { formatINR, formatINRCompact, sumPaise } from "@/lib/money";
+import { formatINR, formatINRCompact, paiseToInput, sumPaise } from "@/lib/money";
 import { OUTFLOW_GROUPS as GROUP, outflowGroup as groupOf, monthLabel, outflowSheet, downloadCsv, type OutflowRow as Row } from "@/lib/outflow";
 
 
@@ -18,6 +18,13 @@ export default function Outflow() {
   const [focus, setFocus] = useState<string | null>(null);
 
   const q = useQuery(async () => unwrap(await supabase().rpc("projected_outflows", { p_months: 12 })) as Row[], []);
+  // AIF commitments not yet called and not yet scheduled: real future outflow with unknown timing
+  const aifs = useQuery(async () => unwrap(await supabase().from("investments").select("id, entity_id, name, details").eq("category", "aif").is("archived_at", null)) as { id: string; entity_id: string; name: string; details: Record<string, any> | null }[], []);
+  const unscheduled = (aifs.data ?? []).filter((i) => !selected || i.entity_id === selected).map((i) => {
+    const c = Number(i.details?.aif_commitment_paise ?? 0), d = Number(i.details?.aif_drawn_paise ?? 0), next = i.details?.aif_next_call_date ? Number(i.details?.aif_next_call_paise ?? 0) : 0;
+    return { ...i, open: Math.max(0, c - d - next) };
+  }).filter((i) => i.open > 0);
+  const unscheduledTotal = sumPaise(unscheduled.map((i) => i.open));
 
   const data = useMemo(() => {
     const all = (q.data ?? []).filter((r) => !selected || r.entity_id === selected);
@@ -47,7 +54,9 @@ export default function Outflow() {
     const name = (id: string) => entities.find((e) => e.id === id)?.name ?? "Unknown";
     const title = selected ? name(selected) : "Family";
     downloadCsv(`cash-outflow-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${data.keys[0]?.slice(0, 7)}-next-${months}-months`,
-      outflowSheet(data.rows, data.keys, name, title));
+      [...outflowSheet(data.rows, data.keys, name, title),
+        ...(unscheduled.length ? [[], ["AIF capital still to be called (date not known, not in totals above)", "Profile", "Amount (₹)"],
+          ...unscheduled.map((i) => [i.name, name(i.entity_id), paiseToInput(i.open)]), ["Total", "", paiseToInput(unscheduledTotal)]] : [])]);
   };
 
   return (
@@ -116,6 +125,22 @@ export default function Outflow() {
                   </div>
                 ))}
               </div>
+            </>
+          )}
+
+          {unscheduledTotal > 0 && (
+            <>
+              <SectionTitle>AIF capital still to be called</SectionTitle>
+              <div className="card px-4">
+                <div className="flex items-baseline justify-between py-3 border-b hairline"><span className="text-[15px] font-medium">Date not known yet</span><span className="num text-[17px] font-medium">{formatINR(unscheduledTotal)}</span></div>
+                {unscheduled.map((i) => (
+                  <div key={i.id} className="flex items-center gap-3 py-3 border-b hairline last:border-0">
+                    <span className="flex-1 min-w-0"><span className="block text-[15px] truncate">{i.name}</span><span className="block text-[12px] text-ink-3">{entities.find((e) => e.id === i.entity_id)?.name}</span></span>
+                    <span className="num text-[15px]">{formatINR(i.open)}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 px-1 text-xs text-ink-3">Not included in the totals above, because the fund hasn’t announced when it will call this money. Add the date and amount from a drawdown notice to the AIF and it will appear in the right month. Keep this amount easy to access.</p>
             </>
           )}
 

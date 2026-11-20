@@ -8,6 +8,7 @@ export const OUTFLOW_GROUPS: [string, string, (c: string) => boolean][] = [
   ["loan", "Loan EMIs", (c) => c === "loan_emi"],
   ["insurance", "Insurance premiums", (c) => c.startsWith("insurance")],
   ["vehicle", "Vehicle costs", (c) => c.startsWith("vehicle")],
+  ["aif", "AIF capital calls", (c) => c === "aif_call"],
   ["other", "Other payments", () => true],
 ];
 export const outflowGroup = (c: string) => OUTFLOW_GROUPS.find(([, , f]) => f(c))!;

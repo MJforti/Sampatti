@@ -91,6 +91,8 @@ export const MODULES: Record<string, ModuleDef> = {
       { key: "details.aif_commitment_paise", label: "Total commitment", type: "money", showIf: isAif, help: "The full amount you agreed to invest" },
       { key: "details.aif_drawn_paise", label: "Drawn down so far", type: "money", showIf: isAif, help: "Capital already called by the fund" },
       { key: "details.aif_strategy", label: "Strategy", type: "text", showIf: isAif, placeholder: "e.g. Private credit, Long-short equity" },
+      { key: "details.aif_next_call_date", label: "Next capital call date", type: "date", showIf: isAif, help: "From the fund’s drawdown notice. Shows in Cash outflow" },
+      { key: "details.aif_next_call_paise", label: "Next capital call amount", type: "money", showIf: isAif },
       { key: "details.tds", label: "TDS details", type: "text", showIf: isDeposit, section: "More" },
       { key: "details.dividends", label: "Dividends received", type: "textarea", showIf: isEquity },
       { key: "details.redemption", label: "Redemption details", type: "textarea", showIf: isMF },
