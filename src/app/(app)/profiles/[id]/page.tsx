@@ -12,7 +12,7 @@ import { MODULES, MODULE_LIST } from "@/lib/modules";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
 import { formatINR } from "@/lib/money";
-import { addDays, todayISO } from "@/lib/dates";
+import { addDays, formatDate, todayISO } from "@/lib/dates";
 import { OPEN_STATUSES } from "@/lib/status";
 
 export default function ProfileDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +38,10 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
         return qq;
       }),
     ]);
-    return { s: unwrap(summary) as Record<string, number>, ev: unwrap(ev) as CalEvent[], counts: counts.map((c) => c.count ?? 0) };
+    const alts = unwrap(await sb.from("investments").select("id, category, name, institution, invested_paise, current_value_paise, details")
+      .eq("entity_id", id).in("category", ["pms", "aif"]).is("archived_at", null).order("category").order("name")) as
+      { id: string; category: string; name: string; institution: string | null; invested_paise: number; current_value_paise: number | null; details: Record<string, any> | null }[];
+    return { s: unwrap(summary) as Record<string, number>, ev: unwrap(ev) as CalEvent[], counts: counts.map((c) => c.count ?? 0), alts };
   }, [id, today]);
 
   if (!e) return <div><PageHeader title="Profile" back="/profiles" /><p className="text-ink-3">Not found or not shared with you.</p></div>;
@@ -73,6 +76,45 @@ export default function ProfileDetail({ params }: { params: Promise<{ id: string
           </Link>
           <SectionTitle action={<Link href="/" onClick={() => setSelected(id)} className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">Open dashboard</Link>}>Due in the next 60 days</SectionTitle>
           <EventList events={q.data.ev} empty="Nothing due." />
+          {q.data.alts.length > 0 && (() => {
+            const alts = q.data!.alts;
+            const inv = alts.reduce((a, x) => a + x.invested_paise, 0), cur = alts.reduce((a, x) => a + (x.current_value_paise ?? x.invested_paise), 0);
+            const undrawnOf = (x: (typeof alts)[number]) => Math.max(0, Number(x.details?.aif_commitment_paise ?? 0) - Number(x.details?.aif_drawn_paise ?? 0));
+            const undrawn = alts.reduce((a, x) => a + (x.category === "aif" ? undrawnOf(x) : 0), 0);
+            return (
+              <>
+                <SectionTitle action={<Link href="/m/investments" onClick={() => setSelected(id)} className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">All investments</Link>}>PMS &amp; AIF</SectionTitle>
+                <div className="card overflow-hidden">
+                  <div className="grid grid-cols-3 gap-2 px-4 py-3 border-b hairline text-[13px]">
+                    <div><div className="text-ink-3">Invested</div><div className="num text-[15px] font-medium text-ink">{formatINR(inv)}</div></div>
+                    <div><div className="text-ink-3">Current</div><div className="num text-[15px] font-medium text-ink">{formatINR(cur)}</div></div>
+                    <div><div className="text-ink-3">{undrawn ? "AIF to be called" : "Gain"}</div><div className={`num text-[15px] font-medium ${undrawn ? "text-ink" : cur >= inv ? "text-ok" : "text-danger"}`}>{formatINR(undrawn || Math.abs(cur - inv))}</div></div>
+                  </div>
+                  {alts.map((x) => {
+                    const c = x.current_value_paise ?? x.invested_paise, g = c - x.invested_paise;
+                    const sub = x.category === "pms"
+                      ? ["PMS", x.institution, x.details?.pms_benchmark && `vs ${x.details.pms_benchmark}`]
+                      : [`AIF ${({ cat1: "Cat I", cat2: "Cat II", cat3: "Cat III" } as Record<string, string>)[x.details?.aif_category] ?? ""}`.trim(), x.institution,
+                         undrawnOf(x) ? `${formatINR(undrawnOf(x))} to be called` : null,
+                         x.details?.aif_next_call_date && `next call ${formatDate(x.details.aif_next_call_date, "short")}`];
+                    return (
+                      <Link key={x.id} href={`/m/investments/${x.id}`} className="flex items-center gap-3 px-4 py-3.5 border-b hairline last:border-0 active:bg-surface-2 transition-colors">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[15px] font-medium truncate">{x.name}</div>
+                          <div className="text-[13px] text-ink-3 truncate">{sub.filter(Boolean).join(" · ")}</div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="num text-[15px] font-medium">{formatINR(c)}</div>
+                          {x.invested_paise > 0 && <div className={`num text-[12px] ${g >= 0 ? "text-ok" : "text-danger"}`}>{g >= 0 ? "+" : "−"}{(Math.abs(g) / x.invested_paise * 100).toFixed(1)}%</div>}
+                        </div>
+                        <ChevronRight className="size-4 text-ink-3" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
           <SectionTitle>Records</SectionTitle>
           <div className="card overflow-hidden">
             {MODULE_LIST.map((m, i) => (
