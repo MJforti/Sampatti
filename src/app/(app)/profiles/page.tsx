@@ -3,9 +3,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { ChevronRight, Plus, Copy, RefreshCw, Pencil } from "lucide-react";
 import { useApp, friendlyError, type Entity, type Family } from "@/components/providers";
-import { Badge, Button, Confirm, ErrorState, ListSkeleton, PageHeader, Sheet } from "@/components/ui";
+import { Badge, Button, Confirm, ErrorState, ListSkeleton, PageHeader, SectionTitle, Sheet } from "@/components/ui";
 import { ProfileForm } from "@/components/profile-form";
 import { MemberAvatar } from "@/components/member-emoji";
+import { ThemePicker } from "@/components/theme";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
 import { formatINR } from "@/lib/money";
@@ -106,6 +107,9 @@ export default function Profiles() {
         </section>
       ))}
       {!loading && !entities.length && !families.length && <div className="card px-4 py-6 text-center text-sm text-ink-3">Nothing shared with you yet. Ask the administrator for a family code, then add it in Settings.</div>}
+
+      <SectionTitle>Appearance</SectionTitle>
+      <ThemePicker />
 
       {isAdminMode && <ProfileForm open={!!adding} onClose={() => setAdding(null)} defaultFamilyId={adding?.familyId ?? null} />}
       <Sheet open={!!famSheet} onClose={() => setFamSheet(null)} title={famSheet === "new" ? "New family" : "Rename family"}
