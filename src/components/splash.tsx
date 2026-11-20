@@ -23,13 +23,15 @@ export function Splash() {
   );
 }
 
-/** True while the intro should play: in full once per browser session for each place (login, app open), then skipped. */
+/** True while the intro should play: on every launch of the installed app, and once per browser session for each place (login, app open) in a browser tab. */
 export function useIntro(place: "login" | "app") {
   const [intro, setIntro] = useState(true);
   useEffect(() => {
     let seen = false;
     try { seen = sessionStorage.getItem(`sampatti.intro.${place}`) === "1"; sessionStorage.setItem(`sampatti.intro.${place}`, "1"); } catch { /* ignore */ }
-    if (seen) { setIntro(false); return; }
+    // Opened from the home-screen icon: play on every launch (phones can keep the old session around)
+    const installed = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
+    if (seen && !installed) { setIntro(false); return; }
     const t = setTimeout(() => setIntro(false), 2600);
     return () => clearTimeout(t);
   }, []);
