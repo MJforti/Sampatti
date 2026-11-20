@@ -1,3 +1,6 @@
+"use client";
+import { useEffect, useState } from "react";
+
 // Loading screen: the logo's line draws itself, a ledger rule runs across, and the name writes in.
 export function Splash() {
   return (
@@ -18,4 +21,17 @@ export function Splash() {
       </div>
     </div>
   );
+}
+
+/** True while the intro should play: in full once per browser session, then skipped. */
+export function useIntro() {
+  const [intro, setIntro] = useState(true);
+  useEffect(() => {
+    let seen = false;
+    try { seen = sessionStorage.getItem("sampatti.intro") === "1"; sessionStorage.setItem("sampatti.intro", "1"); } catch { /* ignore */ }
+    if (seen) { setIntro(false); return; }
+    const t = setTimeout(() => setIntro(false), 1700);
+    return () => clearTimeout(t);
+  }, []);
+  return intro;
 }

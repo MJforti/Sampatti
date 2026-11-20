@@ -7,7 +7,7 @@ import { useApp, type AdminStatus } from "./providers";
 import { Button, Sheet, cx } from "./ui";
 import { supabase } from "@/lib/supabase/client";
 import { LogoutButton } from "./logout";
-import { Splash } from "./splash";
+import { Splash, useIntro } from "./splash";
 
 const TABS = [
   { href: "/", label: "Home", icon: Home },
@@ -26,15 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
 
-  // Let the intro play in full once per session; later loads show it only while data loads.
-  const [intro, setIntro] = useState(true);
-  useEffect(() => {
-    let seen = false;
-    try { seen = sessionStorage.getItem("sampatti.intro") === "1"; sessionStorage.setItem("sampatti.intro", "1"); } catch { /* ignore */ }
-    if (seen) { setIntro(false); return; }
-    const t = setTimeout(() => setIntro(false), 1700);
-    return () => clearTimeout(t);
-  }, []);
+  const intro = useIntro();
 
   if (loading || !user || intro) {
     return <Splash />;

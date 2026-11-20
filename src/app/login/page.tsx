@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui";
+import { Splash, useIntro } from "@/components/splash";
 
 export default function Login() {
+  const intro = useIntro();
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
@@ -36,6 +38,7 @@ export default function Login() {
   };
 
   const signup = mode === "signup";
+  if (intro) return <Splash />;
   return (
     <main className="min-h-dvh flex flex-col justify-center px-6 max-w-sm mx-auto safe-top safe-bottom">
       <div className="mb-10">
