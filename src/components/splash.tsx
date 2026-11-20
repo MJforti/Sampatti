@@ -25,7 +25,7 @@ export function Splash({ message, place, greeting }: { message?: string; place?:
         </svg>
         <div className="relative mt-6 w-[min(80vw,320px)]">
           <div className="splash-rule absolute left-1/2 top-full h-px w-[200vw] -translate-x-1/2 bg-[var(--accent)]" />
-          <div className="text-center text-[32px] font-medium tracking-tight leading-tight pb-2" aria-hidden>
+          <div className="text-center text-[38px] font-medium tracking-tight leading-tight pb-2" aria-hidden>
             {"Sampatti".split("").map((ch, i) => <span key={i} className="splash-letter inline-block" style={{ animationDelay: `${1.1 + i * 0.07}s` }}>{ch}</span>)}
           </div>
         </div>
