@@ -37,3 +37,8 @@ export function useIntro(place: "login" | "app") {
   }, []);
   return intro;
 }
+
+/** After logging out, play the splash again as the login page opens. */
+export function replayIntroOnLogin() {
+  try { sessionStorage.removeItem("sampatti.intro.login"); } catch { /* ignore */ }
+}
