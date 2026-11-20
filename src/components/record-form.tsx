@@ -33,26 +33,49 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [lastInit, setLastInit] = useState(initial);
-  // Unsaved progress is kept on this device per person, form and record, so leaving midway loses nothing.
-  const draftKey = user ? `sampatti.draft.${user.id}.${mod.key}.${record?.id ?? "new"}` : null;
+  // Unsaved progress is kept as a draft on this device and in the account (synced across devices),
+  // per person, form and record, so leaving midway loses nothing.
+  const formKey = `${mod.key}.${record?.id ?? "new"}`;
+  const draftKey = user ? `sampatti.draft.${user.id}.${formKey}` : null;
   const [restored, setRestored] = useState(false);
+  const takeDraft = (d: Draft | null) => { if (d) { setVals({ ...initial, ...d.v }); setRestored(true); } };
   if (lastInit !== initial) {
     const d = readDraft(draftKey, initial);
-    setLastInit(initial); setVals(d ? { ...initial, ...d } : initial); setRestored(!!d); setErrors({});
+    setLastInit(initial); setVals(d ? { ...initial, ...d.v } : initial); setRestored(!!d); setErrors({});
   }
-  // Pick up a draft when the form is first opened (or a different record is opened)
+  // On opening: use this device's draft, then the account's if it is newer (e.g. started on another phone)
   useEffect(() => {
-    if (!open) return;
-    const d = readDraft(draftKey, initial);
-    if (d) { setVals({ ...initial, ...d }); setRestored(true); }
+    if (!open || !user) return;
+    const local = readDraft(draftKey, initial);
+    takeDraft(local);
+    let live = true;
+    supabase().from("form_drafts").select("data, updated_at").eq("form_key", formKey).maybeSingle().then(({ data }) => {
+      if (!live || !data) return;
+      const remote: Draft = { v: data.data as Rec, at: new Date(data.updated_at).getTime() };
+      if (remote.at > (local?.at ?? 0) && differs(remote.v, initial)) {
+        takeDraft(remote);
+        try { localStorage.setItem(draftKey!, JSON.stringify(remote)); } catch { /* ignore */ }
+      }
+    });
+    return () => { live = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, draftKey]);
+  // Save as you type: on this device at once, to the account after a short pause
   useEffect(() => {
-    if (!draftKey || !open) return;
-    const changed = Object.keys(vals).some((k) => JSON.stringify(vals[k]) !== JSON.stringify(initial[k]));
-    if (changed) try { localStorage.setItem(draftKey, JSON.stringify(vals)); } catch { /* ignore */ }
-  }, [vals, initial, draftKey, open]);
-  const discardDraft = () => { try { if (draftKey) localStorage.removeItem(draftKey); } catch { /* ignore */ } setVals(initial); setRestored(false); };
+    if (!draftKey || !open || !differs(vals, initial)) return;
+    const at = Date.now();
+    try { localStorage.setItem(draftKey, JSON.stringify({ v: vals, at })); } catch { /* ignore */ }
+    const t = setTimeout(() => {
+      supabase().from("form_drafts").upsert({ form_key: formKey, data: vals, updated_at: new Date(at).toISOString() }).then(() => {});
+    }, 1000);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vals]);
+  const clearDraft = () => {
+    try { if (draftKey) localStorage.removeItem(draftKey); } catch { /* ignore */ }
+    if (user) supabase().from("form_drafts").delete().eq("form_key", formKey).then(() => {});
+  };
+  const discardDraft = () => { clearDraft(); setVals(initial); setRestored(false); };
 
   const set = (k: string, v: unknown) => setVals((s) => ({ ...s, [k]: v }));
   const visible = mod.fields.filter((f) => !f.showIf || f.showIf(vals));
@@ -96,7 +119,7 @@ export function RecordForm({ mod, record, open, onClose, onSaved, defaults }: {
     const { data, error } = await q;
     setBusy(false);
     if (error) { toast(friendlyError(error), "error"); return; }
-    try { if (draftKey) localStorage.removeItem(draftKey); } catch { /* ignore */ }
+    clearDraft();
     setRestored(false);
     toast(record?.id ? "Saved" : `${mod.singular} added`);
     onSaved(data);
@@ -178,13 +201,15 @@ function FieldInput({ f, value, onChange, error, entities, banks, allBanks, vehi
   );
 }
 
-function readDraft(key: string | null, initial?: Rec): Rec | null {
+type Draft = { v: Rec; at: number };
+const differs = (a: Rec, b: Rec) => Object.keys(a).some((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k]));
+
+function readDraft(key: string | null, initial: Rec): Draft | null {
   if (!key || typeof window === "undefined") return null;
   try {
     const s = localStorage.getItem(key); if (!s) return null;
-    const d = JSON.parse(s) as Rec;
-    // A draft identical to the blank/current form isn't worth restoring
-    if (initial && !Object.keys(d).some((k) => JSON.stringify(d[k]) !== JSON.stringify(initial[k]))) return null;
-    return d;
+    const raw = JSON.parse(s);
+    const d: Draft = raw && typeof raw.at === "number" && raw.v ? raw : { v: raw as Rec, at: 0 }; // older drafts were the values alone
+    return differs(d.v, initial) ? d : null; // a draft identical to the form isn't worth restoring
   } catch { return null; }
 }

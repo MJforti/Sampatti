@@ -335,3 +335,14 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 update user_profiles set theme = 'dark' where id = auth.uid();
 select pg_temp.act_as(null);
 select pg_temp.ok((select theme = 'dark' from user_profiles where id = '00000000-0000-0000-0000-00000000000b'), 'user saves own theme');
+
+-- ---- Form drafts are private ---------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+insert into form_drafts (form_key, data) values ('investments.new', '{"name":"x"}');
+select pg_temp.ok((select count(*) = 1 from form_drafts), 'member can save own draft');
+do $$ begin insert into form_drafts (user_id, form_key, data) values ('00000000-0000-0000-0000-00000000000a', 'x', '{}'); raise exception 'should fail';
+exception when insufficient_privilege then null; end $$;
+select pg_temp.ok(true, 'cannot write a draft for someone else');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.ok((select count(*) = 0 from form_drafts), 'another user cannot see that draft');
+select pg_temp.act_as(null);
