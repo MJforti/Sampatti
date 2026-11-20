@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui";
-import { Splash, useIntro } from "@/components/splash";
+import { Splash, useIntro, replayIntroOnAppOpen } from "@/components/splash";
 
 export default function Login() {
   const intro = useIntro("login");
@@ -27,6 +27,7 @@ export default function Login() {
     if (mode === "signup") {
       const { error } = await sb.rpc("sign_up", { p_email: email, p_password: password, p_full_name: name || null });
       if (error) { setMsg(error.message); setBusy(false); return; }
+      replayIntroOnAppOpen();
     }
     const { error } = await sb.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error) { setMsg(error.message === "Invalid login credentials" ? "Email or password is incorrect" : error.message); setBusy(false); return; }
