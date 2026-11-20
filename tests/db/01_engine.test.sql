@@ -324,3 +324,9 @@ select id, 'aif', 'Call Test AIF', 0, jsonb_build_object('aif_commitment_paise',
 from family_entities where name = 'Vishesh Jain';
 select pg_temp.ok((select sum(amount_paise) = 250000000 from projected_outflows(12) where category = 'aif_call'), 'next AIF capital call is projected');
 select pg_temp.act_as(null);
+
+-- Theme preference: a user can save their own appearance
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+update user_profiles set theme = 'dark' where id = auth.uid();
+select pg_temp.act_as(null);
+select pg_temp.ok((select theme = 'dark' from user_profiles where id = '00000000-0000-0000-0000-00000000000b'), 'user saves own theme');

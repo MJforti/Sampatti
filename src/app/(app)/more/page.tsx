@@ -3,6 +3,7 @@ import Link from "next/link";
 import { TrendingUp, ShieldCheck, Landmark, Car, Building2, FileText, BarChart3, Settings, Repeat, ChevronRight, Wallet, UserCog, ScrollText, Search } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { AdminToggle } from "@/components/shell";
+import { ThemePicker } from "@/components/theme";
 import { LogoutButton } from "@/components/logout";
 import { PageHeader, SectionTitle } from "@/components/ui";
 
@@ -35,6 +36,9 @@ export default function More() {
           </Link>
         ))}
       </div>
+      <SectionTitle>Appearance</SectionTitle>
+      <ThemePicker />
+
       {admin?.is_admin && (
         <>
           <SectionTitle>Administration</SectionTitle>

@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { Sun, Moon, Smartphone } from "lucide-react";
 import { cx } from "./ui";
+import { useApp } from "./providers";
+import { supabase } from "@/lib/supabase/client";
 
 export type Theme = "system" | "light" | "dark";
 const KEY = "sampatti.theme"; // per-device UI preference
@@ -17,14 +19,24 @@ export function applyTheme(t: Theme) {
   document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? "#111314" : "#f6f4ef"));
 }
 
+export function savedTheme(): Theme {
+  try { const t = localStorage.getItem(KEY); return t === "light" || t === "dark" ? t : "system"; } catch { return "system"; }
+}
+
 export function ThemePicker() {
+  const { user, profile } = useApp();
   const [theme, setTheme] = useState<Theme>("system");
-  useEffect(() => { try { const t = localStorage.getItem(KEY); if (t === "light" || t === "dark") setTheme(t); } catch { /* ignore */ } }, []);
+  useEffect(() => { setTheme((profile?.theme as Theme) ?? savedTheme()); }, [profile?.theme]);
+  const choose = (t: Theme) => {
+    setTheme(t); applyTheme(t);
+    // Remember on the account too, so it follows the person to every device
+    if (user) supabase().from("user_profiles").update({ theme: t }).eq("id", user.id).then(() => {});
+  };
   const opts: [Theme, string, typeof Sun][] = [["light", "Light", Sun], ["dark", "Dark", Moon], ["system", "Match phone", Smartphone]];
   return (
     <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-surface-2" role="radiogroup" aria-label="Appearance">
       {opts.map(([k, label, Icon]) => (
-        <button key={k} role="radio" aria-checked={theme === k} onClick={() => { setTheme(k); applyTheme(k); }}
+        <button key={k} role="radio" aria-checked={theme === k} onClick={() => choose(k)}
           className={cx("h-11 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 transition-colors", theme === k ? "bg-surface shadow-sm text-ink" : "text-ink-3")}>
           <Icon className="size-4" strokeWidth={1.5} />{label}
         </button>
