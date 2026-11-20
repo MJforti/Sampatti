@@ -6,7 +6,7 @@ import { Button } from "@/components/ui";
 import { Splash, useIntro } from "@/components/splash";
 
 export default function Login() {
-  const intro = useIntro();
+  const intro = useIntro("login");
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");

@@ -23,12 +23,12 @@ export function Splash() {
   );
 }
 
-/** True while the intro should play: in full once per browser session, then skipped. */
-export function useIntro() {
+/** True while the intro should play: in full once per browser session for each place (login, app open), then skipped. */
+export function useIntro(place: "login" | "app") {
   const [intro, setIntro] = useState(true);
   useEffect(() => {
     let seen = false;
-    try { seen = sessionStorage.getItem("sampatti.intro") === "1"; sessionStorage.setItem("sampatti.intro", "1"); } catch { /* ignore */ }
+    try { seen = sessionStorage.getItem(`sampatti.intro.${place}`) === "1"; sessionStorage.setItem(`sampatti.intro.${place}`, "1"); } catch { /* ignore */ }
     if (seen) { setIntro(false); return; }
     const t = setTimeout(() => setIntro(false), 1700);
     return () => clearTimeout(t);

@@ -26,7 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!loading && !user) router.replace("/login");
   }, [loading, user, router]);
 
-  const intro = useIntro();
+  const intro = useIntro("app");
 
   if (loading || !user || intro) {
     return <Splash />;
