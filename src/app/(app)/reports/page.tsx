@@ -8,6 +8,9 @@ import { addDays, todayISO } from "@/lib/dates";
 import { formatINR, paiseToInput, sumPaise } from "@/lib/money";
 import { OPEN_STATUSES, isInflow } from "@/lib/status";
 import type { CalEvent } from "@/components/obligations";
+import Link from "next/link";
+import { MemberAvatar } from "@/components/member-emoji";
+import { outflowMonths, outflowSheet, downloadCsv, type OutflowRow } from "@/lib/outflow";
 
 type S = Record<string, number>;
 
@@ -27,12 +30,19 @@ export default function Reports() {
     const per = await Promise.all(entities.map(async (e) => ({ e, s: unwrap(await sb.rpc("dashboard_summary", { p_entity: e.id })) as S })));
     const ev = unwrap(await sb.from("financial_calendar_events").select("*").in("status", OPEN_STATUSES).lte("event_date", addDays(today, 90))) as CalEvent[];
     const paid = unwrap(await sb.from("financial_calendar_events").select("*").in("status", ["paid"]).gte("paid_on", today.slice(0, 8) + "01")) as CalEvent[];
-    return { fam, per, ev: ev.filter((e) => !isInflow(e.category)), paid };
+    const out = unwrap(await sb.rpc("projected_outflows", { p_months: 12 })) as OutflowRow[];
+    return { fam, per, ev: ev.filter((e) => !isInflow(e.category)), paid, out };
   }, [entities, today]);
 
   if (q.error) return <ErrorState error={q.error} retry={q.reload} />;
   if (q.loading || !q.data) return <div><PageHeader title="Reports" back="/more" /><ListSkeleton rows={6} /></div>;
-  const { fam, per, ev, paid } = q.data;
+  const { fam, per, ev, paid, out } = q.data;
+  const outKeys = outflowMonths(out, 12, today);
+  const outRows = out.filter((r) => outKeys.includes(r.month));
+  const outTotal = sumPaise(outRows.map((r) => r.amount_paise));
+  const outByProfile = [...outRows.reduce((m, r) => m.set(r.entity_id, (m.get(r.entity_id) ?? 0) + r.amount_paise), new Map<string, number>())].sort((a, b) => b[1] - a[1]);
+  const nameOf = (id: string) => entities.find((e) => e.id === id)?.name ?? "Unknown";
+  const exportOutflow = () => downloadCsv(`cash-outflow-family-${outKeys[0]?.slice(0, 7)}-next-12-months`, outflowSheet(out, outKeys, nameOf, "Family"));
   const buckets = [30, 60, 90].map((d) => ({ d, v: sumPaise(ev.filter((e) => e.event_date <= addDays(today, d)).map((e) => e.amount_paise)) }));
   const max = Math.max(1, ...buckets.map((b) => b.v));
   const banks = new Map<string, { label: string; v30: number; n: number }>();
@@ -50,6 +60,7 @@ export default function Reports() {
     ["Family total", ...cols.map((c) => paiseToInput(fam[c]))],
     [], ["Upcoming outflows", "Amount (₹)"], ...buckets.map((b) => [`Next ${b.d} days`, paiseToInput(b.v)]),
     [], ["Bank (next 30 days)", "Items", "Amount (₹)"], ...[...banks.values()].map((b) => [b.label, b.n, paiseToInput(b.v30)]),
+    [], ...outflowSheet(out, outKeys, nameOf, "Family"),
     [], ["Upcoming item", "Profile", "Due", "Amount (₹)", "Bank", "Status"], ...ev.sort((a, b) => a.event_date.localeCompare(b.event_date)).map((e) => [e.title, e.entity_name, e.event_date, paiseToInput(e.amount_paise), e.bank_name ?? "", e.status]),
   ]);
 
@@ -59,6 +70,7 @@ export default function Reports() {
       <div className="grid grid-cols-2 gap-2 no-print">
         <Button variant="secondary" onClick={exportAll}><Download className="size-4" />CSV / Excel</Button>
         <Button variant="secondary" onClick={() => window.print()}><Printer className="size-4" />Print / PDF</Button>
+        <Button variant="secondary" className="col-span-2" onClick={exportOutflow} disabled={!outTotal}><Download className="size-4" />Cash outflow only (CSV / Excel)</Button>
       </div>
 
       <SectionTitle>Family position</SectionTitle>
@@ -88,6 +100,23 @@ export default function Reports() {
       <SectionTitle>Bank-wise · next 30 days</SectionTitle>
       <div className="card px-4">{[...banks.values()].map((b) => <div key={b.label} className="flex justify-between py-3 border-b hairline last:border-0 text-sm"><span>{b.label} <span className="text-ink-3">· {b.n}</span></span><span className="num font-semibold">{formatINR(b.v30)}</span></div>)}
         {!banks.size && <div className="py-3 text-sm text-ink-3">No deductions expected.</div>}</div>
+
+      <SectionTitle action={<Link href="/outflow" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium no-print">Details</Link>}>Cash outflow · next 12 months</SectionTitle>
+      <div className="card px-4">
+        <div className="flex items-baseline justify-between py-3 border-b hairline"><span className="text-[15px] font-medium">Total</span><span className="num text-[17px] font-medium">{formatINR(outTotal)}</span></div>
+        {outByProfile.map(([id, v]) => {
+          const e = entities.find((x) => x.id === id);
+          return (
+            <div key={id} className="flex items-center gap-3 py-3 border-b hairline last:border-0">
+              {e && <MemberAvatar entity={e} size="sm" />}
+              <span className="flex-1 min-w-0 truncate text-[15px] text-ink-2">{nameOf(id)}</span>
+              <span className="num text-[13px] text-ink-3">{outTotal ? Math.round((v / outTotal) * 100) : 0}%</span>
+              <span className="num text-[15px] w-28 text-right">{formatINR(v)}</span>
+            </div>
+          );
+        })}
+        {!outByProfile.length && <div className="py-3 text-sm text-ink-3">No recurring payments yet</div>}
+      </div>
 
       <SectionTitle>Completed this month</SectionTitle>
       <div className="card px-4 py-3 flex justify-between text-sm"><span>{paid.length} payment{paid.length === 1 ? "" : "s"} recorded</span><span className="num font-semibold">{formatINR(sumPaise(paid.map((p) => p.paid_amount_paise)))}</span></div>

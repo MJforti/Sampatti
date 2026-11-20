@@ -7,26 +7,9 @@ import { MemberAvatar } from "@/components/member-emoji";
 import { Button, Chip, ErrorState, ListSkeleton, PageHeader, SectionTitle, cx } from "@/components/ui";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
-import { formatINR, formatINRCompact, paiseToInput, sumPaise } from "@/lib/money";
+import { formatINR, formatINRCompact, sumPaise } from "@/lib/money";
+import { OUTFLOW_GROUPS as GROUP, outflowGroup as groupOf, monthLabel, outflowSheet, downloadCsv, type OutflowRow as Row } from "@/lib/outflow";
 
-type Row = { entity_id: string; month: string; category: string; amount_paise: number; items: number };
-
-const GROUP: [string, string, (c: string) => boolean][] = [
-  ["invest", "SIPs & recurring deposits", (c) => c === "sip" || c === "recurring_deposit"],
-  ["loan", "Loan EMIs", (c) => c === "loan_emi"],
-  ["insurance", "Insurance premiums", (c) => c.startsWith("insurance")],
-  ["tax", "Tax & compliance", (c) => c.startsWith("tax") || c === "compliance_other"],
-  ["vehicle", "Vehicle costs", (c) => c.startsWith("vehicle")],
-  ["other", "Other payments", () => true],
-];
-const groupOf = (c: string) => GROUP.find(([, , f]) => f(c))!;
-
-function downloadCsv(name: string, rows: (string | number)[][]) {
-  const body = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
-  const url = URL.createObjectURL(new Blob(["\ufeff" + body], { type: "text/csv;charset=utf-8" })); // BOM so Excel reads ₹ and names
-  const a = Object.assign(document.createElement("a"), { href: url, download: `${name}.csv` });
-  a.click(); URL.revokeObjectURL(url);
-}
 
 export default function Outflow() {
   const { selected, entities } = useApp();
@@ -56,31 +39,14 @@ export default function Outflow() {
   }, [q.data, selected, months]);
 
   const max = Math.max(1, ...data.byMonth.map((x) => x.v));
-  const mLabel = (k: string, style: "short" | "long" = "short") => new Intl.DateTimeFormat("en-IN", { month: style, year: style === "long" ? "numeric" : undefined, timeZone: "UTC" }).format(new Date(k + "T00:00:00Z"));
+  const mLabel = monthLabel;
   const focused = data.byMonth.find((x) => x.k === focus);
 
   const exportCsv = () => {
     const name = (id: string) => entities.find((e) => e.id === id)?.name ?? "Unknown";
-    const profiles = [...new Set(data.rows.map((r) => r.entity_id))].sort((a, b) => name(a).localeCompare(name(b)));
-    const groups = GROUP.map(([k, l]) => [k, l] as const).filter(([k]) => data.byGroup.some(([g]) => g === k));
-    const cell = (filter: (r: Row) => boolean) => paiseToInput(sumPaise(data.rows.filter(filter).map((r) => r.amount_paise))) || "0";
     const title = selected ? name(selected) : "Family";
-    downloadCsv(`cash-outflow-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${data.keys[0]?.slice(0, 7)}-next-${months}-months`, [
-      [`Cash outflow: ${title}`, `Next ${months} months from ${mLabel(data.keys[0], "long")}`],
-      ["Amounts in ₹. Projected from each recurring payment’s next due date and how often it repeats."],
-      [],
-      ["Month by profile (₹)", ...profiles.map(name), "Total"],
-      ...data.keys.map((k) => [mLabel(k, "long"), ...profiles.map((id) => cell((r) => r.month === k && r.entity_id === id)), cell((r) => r.month === k)]),
-      ["Total", ...profiles.map((id) => cell((r) => r.entity_id === id)), cell(() => true)],
-      [],
-      ["Month by type (₹)", ...groups.map(([, l]) => l), "Total"],
-      ...data.keys.map((k) => [mLabel(k, "long"), ...groups.map(([g]) => cell((r) => r.month === k && groupOf(r.category)[0] === g)), cell((r) => r.month === k)]),
-      ["Total", ...groups.map(([g]) => cell((r) => groupOf(r.category)[0] === g)), cell(() => true)],
-      [],
-      ["Profile", "Type", "Month", "Payments", "Amount (₹)"],
-      ...[...data.rows].sort((a, b) => a.month.localeCompare(b.month) || name(a.entity_id).localeCompare(name(b.entity_id)))
-        .map((r) => [name(r.entity_id), groupOf(r.category)[1], mLabel(r.month, "long"), r.items, paiseToInput(r.amount_paise)]),
-    ]);
+    downloadCsv(`cash-outflow-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${data.keys[0]?.slice(0, 7)}-next-${months}-months`,
+      outflowSheet(data.rows, data.keys, name, title));
   };
 
   return (
