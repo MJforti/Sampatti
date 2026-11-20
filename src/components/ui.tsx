@@ -153,8 +153,8 @@ export function PageHeader({ title, subtitle, back, action }: { title: string; s
 export function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-3 border-b hairline last:border-0">
-      <div className="text-sm text-ink-3 shrink-0">{label}</div>
-      <div className="text-[15px] text-right break-words min-w-0">{value ?? "Not set"}</div>
+      <div className="text-sm text-ink-3 max-w-[45%]">{label}</div>
+      <div className="text-[15px] text-right min-w-0 flex-1 [overflow-wrap:break-word] [hyphens:none]">{value ?? "Not set"}</div>
     </div>
   );
 }

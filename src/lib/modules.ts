@@ -45,11 +45,13 @@ const opt = (...pairs: string[]): [string, string][] =>
 export const INVESTMENT_TYPES = opt(
   "mutual_fund:Mutual fund", "equity:Equity", "fixed_deposit:Fixed deposit", "recurring_deposit:Recurring deposit",
   "ppf:PPF", "epf:EPF", "nps:NPS", "bond:Bond", "gsec:Govt. security", "gold:Gold", "sgb:Sovereign Gold Bond",
-  "real_estate:Real estate", "other:Other");
+  "real_estate:Real estate", "pms:PMS (Portfolio Management Services)", "aif:AIF (Alternative Investment Fund)", "other:Other");
 
 const isMF = (v: Record<string, unknown>) => v.category === "mutual_fund";
 const isEquity = (v: Record<string, unknown>) => v.category === "equity";
 const isDeposit = (v: Record<string, unknown>) => ["fixed_deposit", "recurring_deposit", "bond", "gsec", "sgb", "ppf", "nps", "epf"].includes(String(v.category));
+const isPms = (v: Record<string, unknown>) => v.category === "pms";
+const isAif = (v: Record<string, unknown>) => v.category === "aif";
 const hasSip = (v: Record<string, unknown>) => v.mode === "sip" || v.category === "recurring_deposit";
 
 export const MODULES: Record<string, ModuleDef> = {
@@ -63,7 +65,7 @@ export const MODULES: Record<string, ModuleDef> = {
       { key: "joint_entity_ids", label: "Joint holders", type: "entities" },
       { key: "category", label: "Type", type: "select", options: INVESTMENT_TYPES, required: true },
       { key: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Parag Parikh Flexi Cap" },
-      { key: "institution", label: "AMC / Bank / Broker", type: "text" },
+      { key: "institution", label: "AMC, bank, broker or manager", type: "text", placeholder: "e.g. Marcellus, ASK, Motilal Oswal" },
       { key: "reference_number", label: "Folio / Deposit / Demat no.", type: "text" },
       { key: "mode", label: "Mode", type: "select", options: opt("sip:SIP", "lumpsum:Lump sum"), showIf: (v) => isMF(v) || isEquity(v) },
       { key: "units", label: "Units / Shares", type: "number", showIf: (v) => isMF(v) || isEquity(v) || v.category === "gold" || v.category === "sgb" },
@@ -82,6 +84,13 @@ export const MODULES: Record<string, ModuleDef> = {
       { key: "payout_frequency", label: "Interest payout", type: "select", options: opt("cumulative:Cumulative", "monthly:Monthly", "quarterly:Quarterly", "yearly:Yearly"), showIf: isDeposit },
       { key: "auto_renew", label: "Auto-renewal", type: "bool", showIf: isDeposit },
       { key: "bank_account_id", label: "Linked bank account", type: "bank" },
+      { key: "details.pms_strategy", label: "PMS strategy", type: "text", showIf: isPms, section: "PMS details", placeholder: "e.g. Consistent Compounders" },
+      { key: "details.pms_benchmark", label: "Benchmark", type: "text", showIf: isPms, placeholder: "e.g. Nifty 500 TRI" },
+      { key: "details.pms_fees", label: "Fee structure", type: "text", showIf: isPms, placeholder: "e.g. 2% fixed, or 1% + 20% over 10% hurdle" },
+      { key: "details.aif_category", label: "AIF category", type: "select", options: opt("cat1:Category I", "cat2:Category II", "cat3:Category III"), showIf: isAif, section: "AIF details" },
+      { key: "details.aif_commitment_paise", label: "Total commitment", type: "money", showIf: isAif, help: "The full amount you agreed to invest" },
+      { key: "details.aif_drawn_paise", label: "Drawn down so far", type: "money", showIf: isAif, help: "Capital already called by the fund" },
+      { key: "details.aif_strategy", label: "Strategy", type: "text", showIf: isAif, placeholder: "e.g. Private credit, Long-short equity" },
       { key: "details.tds", label: "TDS details", type: "text", showIf: isDeposit, section: "More" },
       { key: "details.dividends", label: "Dividends received", type: "textarea", showIf: isEquity },
       { key: "details.redemption", label: "Redemption details", type: "textarea", showIf: isMF },

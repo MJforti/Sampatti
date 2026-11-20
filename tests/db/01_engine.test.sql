@@ -309,3 +309,8 @@ select pg_temp.ok((select sum(amount_paise) = 6000000 and count(*) = 12 from pro
   'monthly ₹5,000 SIP projects to ₹60,000 over 12 months');
 select pg_temp.ok(not exists (select 1 from projected_outflows(12) where category in ('fd_maturity','investment_maturity')), 'maturities are not counted as outflow');
 select pg_temp.act_as(null);
+
+-- PMS and AIF investment types
+insert into investments (entity_id, category, name, invested_paise) select id, 'pms', 'Test PMS', 5000000000 from family_entities limit 1;
+insert into investments (entity_id, category, name, invested_paise, maturity_date) select id, 'aif', 'Test AIF Cat II', 2500000000, current_date + 1500 from family_entities limit 1;
+select pg_temp.ok((select count(*) = 2 from investments where category in ('pms','aif')), 'PMS and AIF investments can be saved');
