@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Bell, CalendarDays, BellRing, Users, Search, Plus, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Bell, CalendarDays, BellRing, Users, Search, Plus, AlertTriangle, CheckCircle2, Calculator } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { ProfileSelect } from "@/components/profile-select";
 import { EventList, type CalEvent } from "@/components/obligations";
@@ -169,6 +169,13 @@ export default function Home() {
       {done.loading ? <ListSkeleton rows={1} /> : <EventList events={done.data ?? []} empty="No payments recorded yet this month." />}
 
       {/* F. Quick actions */}
+      <SectionTitle action={<Link href="/calculators" className="inline-flex items-center h-11 -my-3 px-1 text-sm text-accent font-medium">All calculators</Link>}>Calculators</SectionTitle>
+      <div className="grid grid-cols-3 gap-2">
+        {([["sip", "SIP"], ["loan", "Loan EMI"], ["goal", "Goal"], ["lumpsum", "Lumpsum"], ["fd", "FD"], ["rd", "RD"]] as const).map(([k, l]) => (
+          <Link key={k} href={`/calculators?tab=${k}`} className="card h-12 flex items-center justify-center gap-1.5 text-sm font-medium active:bg-surface-2"><Calculator className="size-4 text-ink-3" strokeWidth={1.5} />{l}</Link>
+        ))}
+      </div>
+
       <SectionTitle>Quick actions</SectionTitle>
       <div className="grid grid-cols-4 gap-2">
         <Quick href="/reminders" icon={BellRing} label="Reminders" />

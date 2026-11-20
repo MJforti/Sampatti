@@ -1,5 +1,5 @@
 "use client";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Chip, PageHeader, SectionTitle, Row } from "@/components/ui";
 import { formatINR } from "@/lib/money";
 
@@ -187,6 +187,7 @@ function GoalCalc() {
 
 export default function Calculators() {
   const [tab, setTab] = useState<Tab>("sip");
+  useEffect(() => { const t = new URLSearchParams(location.search).get("tab"); if (TABS.some(([k]) => k === t)) setTab(t as Tab); }, []);
   return (
     <div>
       <PageHeader title="Calculators" subtitle="Estimates only. Actual returns and rates vary." back="/more" />
