@@ -77,7 +77,7 @@ export const MODULES: Record<string, ModuleDef> = {
       { key: "next_sip_date", label: "Next deduction date", type: "date", showIf: hasSip, help: "Reminders are scheduled from this date" },
       { key: "interest_rate", label: "Interest rate (% p.a.)", type: "percent", showIf: isDeposit },
       { key: "start_date", label: "Start / deposit date", type: "date" },
-      { key: "maturity_date", label: "Maturity date", type: "date" },
+      { key: "maturity_date", label: "Maturity date", type: "date", showIf: (v) => v.mode !== "sip" },
       { key: "maturity_amount_paise", label: "Maturity amount", type: "money", showIf: isDeposit },
       { key: "payout_frequency", label: "Interest payout", type: "select", options: opt("cumulative:Cumulative", "monthly:Monthly", "quarterly:Quarterly", "yearly:Yearly"), showIf: isDeposit },
       { key: "auto_renew", label: "Auto-renewal", type: "bool", showIf: isDeposit },
