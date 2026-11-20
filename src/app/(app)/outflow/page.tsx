@@ -1,12 +1,13 @@
 "use client";
 import { useMemo, useState } from "react";
+import { Download, Printer } from "lucide-react";
 import { useApp } from "@/components/providers";
 import { ProfileSelect } from "@/components/profile-select";
 import { MemberAvatar } from "@/components/member-emoji";
-import { Chip, ErrorState, ListSkeleton, PageHeader, SectionTitle, cx } from "@/components/ui";
+import { Button, Chip, ErrorState, ListSkeleton, PageHeader, SectionTitle, cx } from "@/components/ui";
 import { supabase } from "@/lib/supabase/client";
 import { unwrap, useQuery } from "@/lib/use-query";
-import { formatINR, formatINRCompact, sumPaise } from "@/lib/money";
+import { formatINR, formatINRCompact, paiseToInput, sumPaise } from "@/lib/money";
 
 type Row = { entity_id: string; month: string; category: string; amount_paise: number; items: number };
 
@@ -19,6 +20,13 @@ const GROUP: [string, string, (c: string) => boolean][] = [
   ["other", "Other payments", () => true],
 ];
 const groupOf = (c: string) => GROUP.find(([, , f]) => f(c))!;
+
+function downloadCsv(name: string, rows: (string | number)[][]) {
+  const body = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\ufeff" + body], { type: "text/csv;charset=utf-8" })); // BOM so Excel reads ₹ and names
+  const a = Object.assign(document.createElement("a"), { href: url, download: `${name}.csv` });
+  a.click(); URL.revokeObjectURL(url);
+}
 
 export default function Outflow() {
   const { selected, entities } = useApp();
@@ -43,7 +51,7 @@ export default function Outflow() {
       const g = groupOf(r.category)[0];
       byGroup.set(g, (byGroup.get(g) ?? 0) + r.amount_paise);
     }
-    return { byMonth, total: sumPaise(byMonth.map((x) => x.v)), byProfile: [...byProfile.entries()].sort((a, b) => b[1] - a[1]),
+    return { rows, keys, byMonth, total: sumPaise(byMonth.map((x) => x.v)), byProfile: [...byProfile.entries()].sort((a, b) => b[1] - a[1]),
       byGroup: [...byGroup.entries()].sort((a, b) => b[1] - a[1]) };
   }, [q.data, selected, months]);
 
@@ -51,14 +59,43 @@ export default function Outflow() {
   const mLabel = (k: string, style: "short" | "long" = "short") => new Intl.DateTimeFormat("en-IN", { month: style, year: style === "long" ? "numeric" : undefined, timeZone: "UTC" }).format(new Date(k + "T00:00:00Z"));
   const focused = data.byMonth.find((x) => x.k === focus);
 
+  const exportCsv = () => {
+    const name = (id: string) => entities.find((e) => e.id === id)?.name ?? "Unknown";
+    const profiles = [...new Set(data.rows.map((r) => r.entity_id))].sort((a, b) => name(a).localeCompare(name(b)));
+    const groups = GROUP.map(([k, l]) => [k, l] as const).filter(([k]) => data.byGroup.some(([g]) => g === k));
+    const cell = (filter: (r: Row) => boolean) => paiseToInput(sumPaise(data.rows.filter(filter).map((r) => r.amount_paise))) || "0";
+    const title = selected ? name(selected) : "Family";
+    downloadCsv(`cash-outflow-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${data.keys[0]?.slice(0, 7)}-next-${months}-months`, [
+      [`Cash outflow: ${title}`, `Next ${months} months from ${mLabel(data.keys[0], "long")}`],
+      ["Amounts in ₹. Projected from each recurring payment’s next due date and how often it repeats."],
+      [],
+      ["Month by profile (₹)", ...profiles.map(name), "Total"],
+      ...data.keys.map((k) => [mLabel(k, "long"), ...profiles.map((id) => cell((r) => r.month === k && r.entity_id === id)), cell((r) => r.month === k)]),
+      ["Total", ...profiles.map((id) => cell((r) => r.entity_id === id)), cell(() => true)],
+      [],
+      ["Month by type (₹)", ...groups.map(([, l]) => l), "Total"],
+      ...data.keys.map((k) => [mLabel(k, "long"), ...groups.map(([g]) => cell((r) => r.month === k && groupOf(r.category)[0] === g)), cell((r) => r.month === k)]),
+      ["Total", ...groups.map(([g]) => cell((r) => groupOf(r.category)[0] === g)), cell(() => true)],
+      [],
+      ["Profile", "Type", "Month", "Payments", "Amount (₹)"],
+      ...[...data.rows].sort((a, b) => a.month.localeCompare(b.month) || name(a.entity_id).localeCompare(name(b.entity_id)))
+        .map((r) => [name(r.entity_id), groupOf(r.category)[1], mLabel(r.month, "long"), r.items, paiseToInput(r.amount_paise)]),
+    ]);
+  };
+
   return (
     <div>
       <PageHeader title="Cash outflow" subtitle="Money going out, projected from every recurring payment" back="/more" />
-      <ProfileSelect />
-      <div className="-mx-4 px-4 flex gap-2 py-2 overflow-x-auto no-scrollbar">{([3, 6, 12] as const).map((n) => <Chip key={n} active={months === n} onClick={() => { setMonths(n); setFocus(null); }}>Next {n} months</Chip>)}</div>
+      <div className="no-print"><ProfileSelect /></div>
+      <p className="hidden print:block text-sm mb-2">{selected ? entities.find((e) => e.id === selected)?.name : "Whole family"} · next {months} months</p>
+      <div className="-mx-4 px-4 flex gap-2 py-2 overflow-x-auto no-scrollbar no-print">{([3, 6, 12] as const).map((n) => <Chip key={n} active={months === n} onClick={() => { setMonths(n); setFocus(null); }}>Next {n} months</Chip>)}</div>
 
       {q.error ? <ErrorState error={q.error} retry={q.reload} /> : q.loading ? <ListSkeleton rows={4} /> : (
         <>
+          <div className="grid grid-cols-2 gap-2 mb-2 no-print">
+            <Button variant="secondary" onClick={exportCsv} disabled={!data.total}><Download className="size-4" />Excel / CSV</Button>
+            <Button variant="secondary" onClick={() => window.print()} disabled={!data.total}><Printer className="size-4" />Print / PDF</Button>
+          </div>
           <div className="card px-5 pt-5 pb-4">
             <div className="text-sm text-ink-3">{focused ? `In ${mLabel(focused.k, "long")}` : `Total over the next ${months} months`}</div>
             <div className="num text-[40px] leading-[48px] font-medium tracking-tight mt-1">{formatINR(focused ? focused.v : data.total)}</div>
