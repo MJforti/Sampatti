@@ -170,7 +170,6 @@ function AdvisorReport() {
             <div key={l as string} className="border hairline rounded-xl px-3 py-2.5"><div className="text-[12px] text-ink-3">{l}</div><div className="num text-[17px] font-medium">{formatINR(v as number)}</div></div>
           ))}
         </div>
-        <div className="report-charts"><HomeCharts entity={selected} /></div>
 
         <H n={++sec}>Due in the next 30 days</H>
         {next30.length ? <T head={["Date", "Item", "Profile", "Account", "Amount"]} num={[4]}
@@ -247,6 +246,9 @@ function AdvisorReport() {
               <div><div className="text-[14px] font-medium">{r.title}</div><p className="text-[13px] text-ink-2 leading-relaxed mt-0.5">{r.body}</p></div>
             </li>))}</ol>
         ) : <p className="text-[14px] text-ink-2">No issues found in the recorded data. Keep records and statement values up to date.</p>}
+
+        <H n={++sec}>Charts</H>
+        <div className="report-charts -mt-6"><HomeCharts entity={selected} /></div>
 
         <footer className="mt-8 pt-3 border-t hairline text-[11px] text-ink-3 leading-relaxed">
           This report is generated from the records entered in Sampatti on {formatDate(today)}. Values marked as estimates, projected outflows and recommendations are based only on that data and general financial principles. It is not investment, tax or legal advice from a SEBI-registered adviser; please consult a qualified professional before acting on it.
