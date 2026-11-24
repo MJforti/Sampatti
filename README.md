@@ -132,3 +132,7 @@ npx supabase start   # full local stack (Docker); migrations apply automatically
 * **MF/portfolio sync** (CAS / MF Central / an account aggregator): write `current_value_paise`, `value_as_of` and `value_is_verified = true`.
 * **Bank confirmation**: an account-aggregator feed (read-only, with consent) could move `awaiting_confirmation` to `paid`.
 * **OCR**: extract fields into a draft that an admin must confirm before saving.
+
+## License
+
+[MIT](LICENSE)
